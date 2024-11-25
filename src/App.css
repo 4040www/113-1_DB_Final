@@ -1,21 +1,78 @@
 .App {
-  background-color: black; 
   width: 100vw;
   height: 100vh;
   display: flex;
-  gap: 60px;
+  flex-direction: column;
+  justify-self: center;
+  align-items: center;
+}
+
+.App-header-bar {
+  width: 100%;
+  height: 60px;
+  background-color: #192e63;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
-.Nav-sidebar {
+.App-header {
+  width: 1200px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.App-header button{
+  background-color: white;
+  font-weight: bold;
+  height: 25px;
+}
+
+.App-header-2 {
+  width: 100%;
+  height: 70px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.App-header-2 button{
+  width: 600px;
+  height: 40px;
+  font-weight: bold;
+}
+
+.App-body {
+  width: 1200px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.RecComponent {
+  width: 100%;
+}
+
+.App-footer {
+  width: 100%;
+  background-color: #192e63;
+  color: white;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+/* .Nav-sidebar {
   display: flex;
   width: 150px;
   height: 500px;
   color: aliceblue;
   border-right: 1px solid #000;
   flex-direction: column;
-  margin-top:150px;
+  text-align: center;
+  padding: 25px;
+  margin-top: 40px;
 }
 
 .Nav-sidebar button{
@@ -24,8 +81,13 @@
   font-weight: bold;
   color: #000;
   height: 25px;
-  margin-top: 30px;
+  margin-top: 20px;
 }
+
+.Nav-sidebar button:hover{
+  background-color: #FF9505;
+}
+
 
 .GUI {
   text-align: center;
@@ -68,7 +130,6 @@
   gap: 20px;
 }
 
-/* ----------------------------------- */
 
 .Shop{
   display: flex;
@@ -113,7 +174,6 @@
   align-items: center;
   width: 40%;
   height: 30px;
-  /* background-color: #C3BABA; */
   border-radius: 1px;
   padding: 5px;
 }
@@ -125,7 +185,6 @@
   align-self: center;
   align-items: center;
   width:80%;
-  /* background-color: #C3BABA; */
 }
 
 .product-card-button {
@@ -162,3 +221,79 @@
   color: #000;
   margin: 10px;
 }
+
+.nav-button:hover{
+  background-color: #FF9505;
+}
+
+
+
+.order_list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 380px;
+  overflow-y: auto;
+  margin-top: 30px;
+}
+
+.top-deco {
+  height:10px;
+  background-color: #C3BABA;
+  width: 100%;
+}
+
+.order {
+  display: flex;
+  width:80%;
+  align-content: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.order_card_info{
+  display:flex;
+  justify-content: space-between;
+  align-content: center;
+  width:580px;
+  background-color: #dfdddd;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 10px;
+}
+
+.order_card_info button{
+  align-self: center;
+  height: 25px;
+  border:0.1px solid #000;
+}
+
+.order_card_info button:hover{
+  align-self: center;
+  height: 25px;
+  border:0.1px solid #000;
+  background-color: #FF9505;
+}
+
+.order_card_deliver {
+  display:flex;
+  justify-content: space-between;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.order_detail {
+  height:60%;
+  font-weight: 500;
+  text-align: start;
+}
+
+.order_product {
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: start;
+} */

@@ -1,63 +1,59 @@
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
-import Login from './Login/login';
-import Shop from './Shop/shop';
-import Cart from './Cart/cart';
-import Market from './Market/market';
-import Order from './Order/order';
-import Market_order from './Market_order/market_order';
+import MarketPage from './Page/MarketPage';
+import Cart from './Page/Cart';
+import YourMarket from './Page/YourMarket';
+import YourOrder from './Page/YourOrder';
+
+function HeaderBar() {
+  const navigate = useNavigate();
+  return (
+    <div style={{ display: 'flex', gap: '30px' }}>
+      <button onClick={() => navigate('/YourOrder')}>Your Order</button>
+      <button onClick={() => navigate('/Cart')}>Cart</button>
+    </div>
+  );
+}
+
+function HeaderBar2() {
+  const navigate = useNavigate();
+  return (
+    <div className='App-header-2'>
+      <button onClick={() => navigate('/')}>Find Product</button>
+      <button onClick={() => navigate('/YourMarket')}>Your Market</button>
+    </div>
+  );
+}
 
 function App() {
+
   return (
     <Router>
       <div className="App">
-        <div>
-          <Sidebar_left />
-        </div>
-        <div>
-          <div className='GUI-bar'>
-            <h2>TIMMY MARKET ⊗</h2>
-          </div>
-          <div className='GUI'>
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/your_market" element={<Market />} />
-              <Route path="/order" element={<Order />} />
-              <Route path="/market_order" element={<Market_order />} />
-            </Routes>
+
+        <div className="App-header-bar">
+          <div className='App-header'>
+            <div style={{ color: 'white', fontWeight: '800', fontSize: 'large' }}>Timmy Market</div>
+            <HeaderBar />
           </div>
         </div>
-        <div>
-          <Sidebar_right />
+
+
+        <div className='App-body'>
+          <HeaderBar2/>
+          <Routes>
+            <Route path="/YourOrder" element={<YourOrder />} />
+            <Route path="/Cart" element={<Cart />} />
+            <Route path="/" element={<MarketPage />} />
+            <Route path="/YourMarket" element={<YourMarket />} />
+          </Routes>
+          <div className='App-footer'>
+            <div>@Timmy Market</div>
+          </div>
         </div>
       </div>
     </Router>
-  );
-}
-
-function Sidebar_left() {
-  const navigate = useNavigate();
-  return (
-    <div className='Nav-sidebar'>
-      <button onClick={() => navigate('/shop')}>Shop</button>
-      <button onClick={() => navigate('/cart')}>Your Cart</button>
-      <button onClick={() => navigate('/order')}>Order</button>
-      <button onClick={() => navigate('/')}>Log Out</button>
-    </div>
-  );
-}
-
-function Sidebar_right() {
-  const navigate = useNavigate();
-  return (
-    <div className='Nav-sidebar'>
-      <button onClick={() => navigate('/your_market')}>Your Market</button>
-      <button onClick={() => navigate('/market_order')}>Market Order</button>
-      <button onClick={() => navigate('/your_market')}>Upload Product</button>
-    </div>
   );
 }
 
