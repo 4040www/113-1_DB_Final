@@ -10,20 +10,20 @@ export default function YourMarket({ }) {
     const [couponIsOpen, setCouponIsOpen] = useState(false);
 
     const openUpload = () => {
-      setUploadIsOpen(true);
+        setUploadIsOpen(true);
     };
-  
+
     const closeUpload = () => {
-      setUploadIsOpen(false);
+        setUploadIsOpen(false);
     };
 
     const openCoupon = () => {
         setCouponIsOpen(true);
-      };
-    
-      const closeCoupon = () => {
+    };
+
+    const closeCoupon = () => {
         setCouponIsOpen(false);
-      };
+    };
 
 
     return (
@@ -45,6 +45,16 @@ export default function YourMarket({ }) {
                             <label>
                                 Price:
                                 <input type="number" name="price" />
+                            </label>
+                            <br />
+                            <label>
+                                Quality:
+                                <input type="number" name="quality" />
+                            </label>
+                            <br />
+                            <label>
+                                Refund Period:
+                                <input type="number" name="refundPeriod" />
                             </label>
                             <br />
                             <button type="submit">Submit</button>

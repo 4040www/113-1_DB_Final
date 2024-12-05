@@ -1,8 +1,6 @@
 
-
-
 export default function YourOrder({ }) {
-    const status1 = "delivering"; // Example status, you can replace it with your actual status logic
+    const status1 = "delivering"; // Exampl</div>e status, you can replace it with your actual status logic
     const status2 = "Checking"; // Example status, you can replace it with your actual status logic
 
     return (
