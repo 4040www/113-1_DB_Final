@@ -1,100 +1,161 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../Card.css';
-
-// TODO: Get Product from backend
-const products = [
-    { name: 'Apple', rating: 4.6, store: 'Supermarket', price: 100, color: 'Red', size: 'Medium' },
-    { name: 'Orange', rating: 4.2, store: 'Grocery Store', price: 100, color: 'Orange', size: 'Medium' },
-    { name: 'Grapes', rating: 4.8, store: 'Fruit Market', price: 300, color: 'Purple', size: 'Small' },
-    { name: 'Strawberry', rating: 4.5, store: 'Farmers Market', price: 100, color: 'Red', size: 'Small' },
-    { name: 'Watermelon', rating: 4.3, store: 'Supermarket', price: 200, color: 'Green', size: 'Large' },
-    { name: 'Pineapple', rating: 4.1, store: 'Grocery Store', price: 100, color: 'Brown', size: 'Large' },
-    { name: 'Apple', rating: 4.6, store: 'Supermarket', price: 100, color: 'Red', size: 'Medium' },
-    { name: 'Orange', rating: 4.2, store: 'Grocery Store', price: 100, color: 'Orange', size: 'Medium' },
-    { name: 'Grapes', rating: 4.8, store: 'Fruit Market', price: 300, color: 'Purple', size: 'Small' },
-    { name: 'Strawberry', rating: 4.5, store: 'Farmers Market', price: 100, color: 'Red', size: 'Small' },
-    { name: 'Watermelon', rating: 4.3, store: 'Supermarket', price: 200, color: 'Green', size: 'Large' },
-    { name: 'Pineapple', rating: 4.1, store: 'Grocery Store', price: 100, color: 'Brown', size: 'Large' },
-    { name: 'Apple', rating: 4.6, store: 'Supermarket', price: 100, color: 'Red', size: 'Medium' },
-    { name: 'Orange', rating: 4.2, store: 'Grocery Store', price: 100, color: 'Orange', size: 'Medium' },
-    { name: 'Grapes', rating: 4.8, store: 'Fruit Market', price: 300, color: 'Purple', size: 'Small' },
-    { name: 'Strawberry', rating: 4.5, store: 'Farmers Market', price: 100, color: 'Red', size: 'Small' },
-    { name: 'Watermelon', rating: 4.3, store: 'Supermarket', price: 200, color: 'Green', size: 'Large' },
-    { name: 'Pineapple', rating: 4.1, store: 'Grocery Store', price: 100, color: 'Brown', size: 'Large' },
-    { name: 'Apple', rating: 4.6, store: 'Supermarket', price: 100, color: 'Red', size: 'Medium' },
-    { name: 'Orange', rating: 4.2, store: 'Grocery Store', price: 100, color: 'Orange', size: 'Medium' },
-    { name: 'Grapes', rating: 4.8, store: 'Fruit Market', price: 300, color: 'Purple', size: 'Small' },
-    { name: 'Strawberry', rating: 4.5, store: 'Farmers Market', price: 100, color: 'Red', size: 'Small' },
-    { name: 'Watermelon', rating: 4.3, store: 'Supermarket', price: 200, color: 'Green', size: 'Large' },
-    { name: 'Orange', rating: 4.2, store: 'Grocery Store', price: 100, color: 'Orange', size: 'Medium' },
-    { name: 'Grapes', rating: 4.8, store: 'Fruit Market', price: 300, color: 'Purple', size: 'Small' },
-    { name: 'Strawberry', rating: 4.5, store: 'Farmers Market', price: 100, color: 'Red', size: 'Small' },
-    { name: 'Watermelon', rating: 4.3, store: 'Supermarket', price: 200, color: 'Green', size: 'Large' },
-    { name: 'Pineapple', rating: 4.1, store: 'Grocery Store', price: 100, color: 'Brown', size: 'Large' },
-];
 
 const PRODUCTS_PER_PAGE = 24;
 
-export default function ProductCard({ searchContent }) {
+export default function ProductCard() {
+    const [products, setProducts] = useState([]);
     const [page, setPage] = useState(1);
+    const [searchValue, setSearchValue] = useState('');
+    const [searchOption, setSearchOption] = useState('Market');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const handlePreviousPage = () => {
-        if (page > 1) {
-            setPage(page - 1);
+    // Fetch products from backend
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                setLoading(true);
+                const response = await fetch('http://localhost:5000/get_product');
+                if (!response.ok) throw new Error('Failed to fetch products');
+                const data = await response.json();
+                console.log(data);
+                setProducts(data);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    // Filter products based on search criteria
+    const filteredProducts = products.filter((product) => {
+        if (!searchValue) return true;
+
+        if (searchOption === 'Market') {
+            return product.store?.toLowerCase().includes(searchValue.toLowerCase());
         }
-    };
-
-    const handleNextPage = () => {
-        if (page < Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)) {
-            setPage(page + 1);
+        if (searchOption === 'PName') {
+            return product.name?.toLowerCase().includes(searchValue.toLowerCase());
         }
-    };
-
-    // TODO : revise with database function
-    const filteredProducts = products.filter(product => product.store.toLowerCase().includes(searchContent.toLowerCase()));
+        if (searchOption === 'PrizeBelow') {
+            return product.price <= Number(searchValue);
+        }
+        if (searchOption === 'PrizeUp') {
+            return product.price >= Number(searchValue);
+        }
+        return true;
+    });
 
     const startIndex = (page - 1) * PRODUCTS_PER_PAGE;
     const endIndex = startIndex + PRODUCTS_PER_PAGE;
     const currentProducts = filteredProducts.slice(startIndex, endIndex);
+    // console.log('currentProducts:', currentProducts);
+
+    const handleAddToCart = async (productId) => {
+        try {
+            const userId = localStorage.getItem('role');
+            console.log('userId:', userId);
+            console.log('productId:', productId);
+            const response = await fetch(
+                `http://localhost:5000/add_to_cart?userid=${userId}&productid=${productId}`,
+                { method: 'POST' }
+            );
+            if (!response.ok) throw new Error('Failed to add to cart');
+            alert('Product added to cart');
+        } catch (err) {
+            console.error(err.message);
+            alert('Failed to add to cart');
+        }
+    };
 
     return (
         <div>
-            <div className='FindProduct'>
-                <p style={{ fontWeight: 'bold', fontSize: '30px' }}>Find Product</p>
-                {/* # TODO: Search Input */}
-                <div style={{display:'flex', gap:'20px'}}>
-                    <select style={{borderRadius:'20px'}}>
+            <div className="FindProduct">
+                <h2>Find Product</h2>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                    <select
+                        style={{ borderRadius: '20px' }}
+                        value={searchOption}
+                        onChange={(e) => setSearchOption(e.target.value)}
+                    >
                         <option value="Market">Market</option>
                         <option value="PName">Product Name</option>
-                        <option value="PrizeBelow">Prize Below</option>
-                        <option value="PrizeUp">Prize Up</option>
+                        <option value="PrizeBelow">Price Below</option>
+                        <option value="PrizeUp">Price Above</option>
                     </select>
-                    <form>
-                        <input className='SearchInput' type="text" placeholder="Search..." />
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            setSearchValue(e.target.elements.searchInput.value);
+                        }}
+                    >
+                        <input
+                            className="SearchInput"
+                            name="searchInput"
+                            type="text"
+                            placeholder="Search..."
+                        />
+                        <button type="submit">Search</button>
                     </form>
                 </div>
             </div>
-            <div>
-                <div className='ProductCard'>
-                    {currentProducts.map((product, index) => (
-                        <div className="ProductCard-content" key={index}>
-                            <h3>{product.name} ({product.rating}☆)</h3>
-                            <div>{product.store}</div>
-                            <div>${product.price} / {product.color} / {product.size}</div>
-                            <div className='ProductCard-content-button'>
-                                <button>Add to Cart</button>
-                                <button>Like</button>
-                                <button>Report</button>
-                            </div>
-                        </div>
-                    ))}
+            {loading ? (
+                <p>Loading products...</p>
+            ) : error ? (
+                <p>Error loading products: {error}</p>
+            ) : (
+                <div>
+                    <div className="ProductCard">
+                        {currentProducts.length > 0 ? (
+                            currentProducts.map((product) => (
+                                <div className="ProductCard-content" key={product.id}>
+                                    <h3>
+                                        {product.pname}
+                                    </h3>
+                                    <div>{product.store}</div>
+                                    <div>
+                                        ${product.price} / {product.color} / {product.size}
+                                    </div>
+                                    <div className="ProductCard-content-button">
+                                        <button onClick={() => handleAddToCart(product.productid)}>
+                                            Add to Cart
+                                        </button>
+                                        <button onClick={() => handleAddToCart(product.productid)}>
+                                            Like
+                                        </button>
+                                        <button onClick={() => handleAddToCart(product.productid)}>
+                                            Report
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p>No products found</p>
+                        )}
+                    </div>
+                    <div style={{ width: '100%', marginTop: '10px', display: 'flex', flexDirection: 'row' }}>
+                        <button
+                            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={page === 1}
+                        >
+                            Previous
+                        </button>
+                        <span>Page {page}</span>
+                        <button
+                            onClick={() =>
+                                setPage((prev) => Math.min(prev + 1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)))
+                            }
+                            disabled={page === Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', height: '30px', padding: '30px', alignItems: 'center' }}>
-                    <button onClick={handlePreviousPage} disabled={page === 1}>previous page</button>
-                    <h3 style={{ margin: '0 auto' }}>{page}</h3>
-                    <button onClick={handleNextPage} disabled={page === Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)}>next page</button>
-                </div>
-            </div>
-        </div>
+            )
+            }
+        </div >
     );
 }

@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+/*
+
+alice.chen@gmail.com
+Pass@1234
+
+
+bob.lin@yahoo.com
+Secure$5678
+
+*/
+
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -39,7 +50,8 @@ function LoginPage() {
 
         if (user.password === password) {
           localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('role', user.role); // 儲存角色
+          localStorage.setItem('role', user.userid); // 儲存角色
+          localStorage.setItem('role_name', user.name); // 儲存角色
 
           // 根據角色導向不同頁面
           if (user.role === 'admin') {

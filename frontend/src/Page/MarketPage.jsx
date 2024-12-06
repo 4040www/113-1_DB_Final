@@ -10,10 +10,10 @@ export default function MarketPage({ }) {
         <div>
             <div className="RecComponent">
                 {/* # TODO: Get Recommand Product*/}
-                <h2>Recommand Product</h2>
+                <h2>Recommend Product</h2>
                 <RecProductCard />
                 {/* # TODO: Get Recommand Coupon*/}
-                <h2>Recommand Coupon</h2>
+                <h2>Recommend Coupon</h2>
                 <RecCouponCard searchContent={setSearchContent} />
             </div>
             <div style={{ height: '6px', backgroundColor: '#192e63', marginTop: '50px', marginBottom: '35px' }} />

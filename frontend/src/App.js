@@ -23,6 +23,9 @@ function HeaderBar() {
 
   return (
     <div style={{ display: 'flex', gap: '30px' }}>
+      {isLoggedIn && (
+        <div style={{color:'white',fontWeight:'bold'}}>你好，{localStorage.getItem('role_name')}</div> // 登入時才顯示登出按鈕
+      )}
       <button onClick={() => navigate('/YourOrder')}>你的訂單</button>
       <button onClick={() => navigate('/Cart')}>購物車</button>
       <button onClick={() => navigate('/LikeProduct')}>喜歡的商品</button>

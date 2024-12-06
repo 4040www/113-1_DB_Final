@@ -214,3 +214,13 @@
 - 如果您有任何問題，請查閱我們的文檔或聯繫專案的貢獻者。
 
 ```
+
+debug area:
+
+1. 
+ALTER TABLE cart
+ADD CONSTRAINT unique_cart UNIQUE (userid, productid);
+
+2.
+ALTER TABLE cart DROP CONSTRAINT cart_pkey;
+ALTER TABLE cart ADD PRIMARY KEY (userid, productid);

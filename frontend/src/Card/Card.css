@@ -34,7 +34,7 @@
     flex-direction: column;
     justify-content: space-between;
     width: 320px;
-    height: 150px;
+    height: 270px;
     padding: 1rem;
     border:black 1px solid;
     background-color: #fff;
@@ -42,13 +42,13 @@
 }
 
 .ProductCard-content-button {
-    width: 100%;
+    width:100%;
     display: flex;
     justify-content: space-between;
 }
 
 .ProductCard-content-button button{
-    width: 150px;
+    width: 100px;
 }
 
 .MarketCard {
