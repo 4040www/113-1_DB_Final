@@ -7,6 +7,7 @@ import YourMarket from './Page/YourMarket';
 import YourOrder from './Page/YourOrder';
 import LoginPage from './Page/LoginPage';
 import AdminPage from './Page/AdminPage';
+import LikeProduct from './Page/LikeProduct';
 
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -24,6 +25,7 @@ function HeaderBar() {
     <div style={{ display: 'flex', gap: '30px' }}>
       <button onClick={() => navigate('/YourOrder')}>你的訂單</button>
       <button onClick={() => navigate('/Cart')}>購物車</button>
+      <button onClick={() => navigate('/LikeProduct')}>喜歡的商品</button>
       {isLoggedIn && (
         <button onClick={handleLogout}>登出</button> // 登入時才顯示登出按鈕
       )}
@@ -64,6 +66,12 @@ function App() {
               element={
                 <ProtectedRoute>
                   <YourOrder />
+                </ProtectedRoute>
+              } />
+            <Route path="/LikeProduct"
+              element={
+                <ProtectedRoute>
+                  <LikeProduct />
                 </ProtectedRoute>
               } />
             <Route path="/AdminPage" element={

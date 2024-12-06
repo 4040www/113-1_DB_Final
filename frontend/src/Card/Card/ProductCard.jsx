@@ -84,6 +84,7 @@ export default function ProductCard({ searchContent }) {
                             <div className='ProductCard-content-button'>
                                 <button>Add to Cart</button>
                                 <button>Like</button>
+                                <button>Report</button>
                             </div>
                         </div>
                     ))}
