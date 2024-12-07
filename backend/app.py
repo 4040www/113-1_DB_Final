@@ -3,6 +3,8 @@ from flask import Flask, request, jsonify
 import psycopg2
 from psycopg2 import pool
 from flask_cors import CORS
+import secrets
+import string
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
@@ -147,6 +149,7 @@ def get_order():
     if not user_id:
         return jsonify({"status": "error", "message": "Missing userid"}), 400
 
+    # 查詢訂單資料
     query = """
         SELECT 
             o.orderid,
@@ -154,21 +157,64 @@ def get_order():
             o.amount,
             o.method,
             o.state,
-            o.address,
+            d.start_station_add,
+            d.end_station_add
+        FROM orders o
+        JOIN delivery d ON o.orderid = d.orderid
+        WHERE o.buyerid = %s
+    """
+    result = execute_query(query, (user_id,))
+    if result["status"] == "error":
+        return jsonify(result), 500
+
+    orders = result.get("data", [])
+
+    # 查詢每個訂單的商品資料
+    for order in orders:
+        order_id = order['orderid']
+        query_products = """
+            SELECT 
+                op.productid,
+                op.quantity,
+                p.pname AS product_name,
+                p.price,
+                p.sellerid,
+                m.mname AS seller_name
+            FROM order_product op
+            JOIN product p ON op.productid = p.productid
+            JOIN market m ON p.sellerid = m.userid
+            WHERE op.orderid = %s
+        """
+        product_result = execute_query(query_products, (order_id,))
+        if product_result["status"] == "error":
+            return jsonify(product_result), 500
+
+        order['products'] = product_result.get("data", [])  # Add products to each order
+
+    return jsonify({"status": "success", "data": orders})
+
+# 訂單商品資料
+@app.route('/get_order_product', methods=['GET'])
+def get_order_product():
+    order_id = request.args.get('orderid')
+    if not order_id:
+        return jsonify({"status": "error", "message": "Missing orderid"}), 400
+
+    query = """
+        SELECT 
             op.productid,
             op.quantity,
             p.pname AS product_name,
             p.price,
             p.sellerid,
             m.mname AS seller_name
-        FROM orders o
-        JOIN order_product op ON o.orderid = op.orderid
+        FROM order_product op
         JOIN product p ON op.productid = p.productid
         JOIN market m ON p.sellerid = m.userid
-        WHERE o.buyerid = %s
+        WHERE op.orderid = %s
     """
-    result = execute_query(query, (user_id,))
-    return jsonify({"data": result})
+    result = execute_query(query, (order_id,))
+    return jsonify(result)
 
 
 # --- POST ----------------------
@@ -229,79 +275,124 @@ def userbehavior():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# 新增訂單
 @app.route('/add_order', methods=['POST'])
 def add_order():
     user_id = request.json.get('userId')
     cart_data = request.json.get('orderData')
 
     if not user_id or not cart_data:
-        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+        return jsonify({"status": "error", "message": "缺少必要的参数"}), 400
     
-    # Generate order ID (can be replaced with a more robust ID generation method)
-    order_id = generate_order_id()
-
-    # Step 1: Insert into the `orders` table for each seller
-    total_order_price = 0  # This will accumulate the total price for the entire order
+    total_order_price = 0  # 用于累加整个订单的总价格
     for seller in cart_data:
         seller_id = seller.get('sellerId')
         seller_total = 0
+
+        # 为每个卖家生成一个唯一的订单 ID
+        order_id = generate_order_id()
+
+        # 第 1 步：为每个卖家插入数据到 `orders` 表
+        query_order = """
+            INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
+            VALUES (%s, NOW(), %s, %s, %s, %s, 'Pending')
+        """
+        execute_query(query_order, (order_id, user_id, seller_id, 0, 'Credit-Card'), fetch=False)  # 先插入订单，金额设为0
+        
+        # 然后将所有商品数据插入 `order_product` 表
         for product in seller.get('products', []):
             product_id = product.get('productId')
             quantity = product.get('quantity')
-            price = get_product_price(product_id)  # Assume this function fetches the price of the product
+            price = product.get('price')  # 获取产品价格
 
-            # Add to the total price for the seller
             seller_total += price * quantity
             total_order_price += price * quantity
 
-            # Step 2: Insert into `order_product` table
+            # 第 2 步：插入数据到 `order_product` 表
             query_order_product = """
                 INSERT INTO order_product (orderid, productid, quantity)
                 VALUES (%s, %s, %s)
             """
             execute_query(query_order_product, (order_id, product_id, quantity), fetch=False)
 
-        # Step 3: Insert into `orders` table (for the current seller)
-        query_order = """
-            INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
-            VALUES (%s, NOW(), %s, %s, %s, %s, 'Pending')
+        # 第 3 步：更新订单金额
+        query_update_order = """
+            UPDATE orders
+            SET amount = %s
+            WHERE orderid = %s AND sellerid = %s
         """
-        execute_query(query_order, (order_id, user_id, seller_id, seller_total, 'Credit-Card'), fetch=False)
+        execute_query(query_update_order, (seller_total, order_id, seller_id), fetch=False)
 
-    # Step 4: Insert into `delivery` table for the entire order
-    delivery_method = request.json.get('deliveryMethod', 'Standard-Shipping')
-    address = request.json.get('address')
-    delivery_fee = calculate_delivery_fee(delivery_method)  # Assume this calculates delivery fee
-    delivery_start_date = time.strftime('%Y-%m-%d')
-    delivery_end_date = time.strftime('%Y-%m-%d')  # Example, could be based on method
+        # 现在我们确认订单已经插入了 orders 表，再插入 delivery 表
+        delivery_method = request.json.get('deliveryMethod', 'Standard-Shipping')
+        start_station_add = request.json.get('startstationadd', 'Default Start Station')  # 确保有有效值
+        address = request.json.get('endstationadd')
+        
+        if not start_station_add or not address:
+            return jsonify({"status": "error", "message": "缺少必要的配送信息"}), 400
+        
+        delivery_fee = calculate_delivery_fee(delivery_method)  # 假设这里计算运费
+        delivery_start_date = time.strftime('%Y-%m-%d')
+        delivery_end_date = time.strftime('%Y-%m-%d')  # 可根据运输方式进行修改
 
-    query_delivery = """
-        INSERT INTO delivery (orderid, dmethod, fee, start_date, end_date, start_station_add, end_station_add, state)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, 'Shipping')
-    """
-    execute_query(query_delivery, (order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, address, address), fetch=False)
+        query_delivery = """
+            INSERT INTO delivery (orderid, dmethod, fee, start_date, end_date, start_station_add, end_station_add, state)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'Shipping')
+        """
+        execute_query(query_delivery, (order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, start_station_add, address), fetch=False)
 
-    # Return success response
-    return jsonify({"status": "success", "message": "Order added successfully"}), 200
+    # 返回成功的响应
+    return jsonify({"status": "success", "message": "订单成功添加"}), 200
 
 def generate_order_id():
-    # Example logic to generate a unique order ID based on timestamp
-    return "ORDER" + str(int(time.time()))
-
-def get_product_price(product_id):
-    # Query to fetch the product price based on product ID
-    query = "SELECT price FROM product WHERE productid = %s"
-    result = execute_query(query, (product_id,))
-    if result:
-        return result[0]['price']
-    return 0  # Default price if not found
+    # 确保订单 ID 唯一
+    order_id = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+    
+    # 可选：检查数据库中是否已存在该 ID（或者让数据库自动处理自增）
+    return order_id
 
 def calculate_delivery_fee(dmethod):
-    # Simple fee calculation logic based on delivery method
+    # 根据配送方式计算费用
     if dmethod == 'Express-Shipping':
-        return 20  # Example for Express Shipping
-    return 5  # Default Standard Shipping fee
+        return 20  # 快递配送费用
+    return 5  # 默认标准配送费用
 
+# 上架商品
+@app.route('/upload_product', methods=['GET', 'POST'])
+def upload_product():
+    data = request.json
+    user_id = data.get('userId')
+    product_name = data.get('productName')
+    price = data.get('price')
+    storage = data.get('storage')
+    period = data.get('refundPeriod')
+    size = data.get('size')
+    color = data.get('color')
+
+    i = query('''
+        SELECT productid FROM product
+        ORDER BY productid DESC
+        LIMIT 1;
+    ''')
+    i = int(i) + 1
+    product_id = str(i).zfill(6)
+
+    if not all([user_id, product_name, price, storage, period, size, color]):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+
+    try:
+        # 在 PostgreSQL 中執行插入操作
+        with psycopg2.connect("dbname='' user='postgres' host='localhost' password=" + db_password) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO product (productid, pname, price, sellerid, storage, period, size, color)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (product_id, product_name, price, user_id, storage, period, size, color))
+                conn.commit()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        print(f"Error uploading product: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # --- DELETE ----------------------
 
@@ -315,6 +406,18 @@ def delete_cart_item():
         return jsonify({"status": "error", "message": "Missing parameters"}), 400
 
     query = "DELETE FROM cart WHERE userid = %s AND productid = %s"
+    result = execute_query(query, (user_id, product_id), fetch=False)
+    return jsonify(result)
+
+# 刪除購物車資料
+@app.route('/clear_cart', methods=['DELETE'])
+def clear_cart():
+    user_id = request.args.get('userid')
+    product_id = request.args.get('productid')
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing userid"}), 400
+
+    query = "DELETE FROM cart WHERE userid = %s and productid = %s"
     result = execute_query(query, (user_id, product_id), fetch=False)
     return jsonify(result)
 

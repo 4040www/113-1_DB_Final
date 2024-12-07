@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 export default function Cart() {
     const [cartData, setCartData] = useState([]);
     const [newQuantity, setNewQuantity] = useState({}); // Used to store new quantities of products
-    const [addresses, setAddresses] = useState({}); // Used to store addresses per seller
+    const [addresses, setAddresses] = useState(""); // Used to store addresses per seller
+    const [selectedSellers, setSelectedSellers] = useState({}); // New state to track selected sellers for order
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch cart data from backend
     const fetchCartData = async () => {
@@ -103,18 +105,17 @@ export default function Cart() {
                     'Content-Type': 'application/json',
                 },
             });
-
+    
             if (!response.ok) throw new Error('Failed to delete cart item');
             const data = await response.json();
-
+    
             if (data.status === 'success') {
                 setCartData(prevData =>
                     prevData.map(seller => ({
                         ...seller,
                         products: seller.products.filter(product => product.productId !== productId),
-                    }))
+                    })).filter(seller => seller.products.length > 0) // Ensure that sellers with no products are removed
                 );
-                alert('Product removed from cart');
             } else {
                 console.error(data.message);
             }
@@ -122,6 +123,7 @@ export default function Cart() {
             console.error(err);
         }
     };
+    
 
     const handleChangeAmount = (productId) => {
         const quantity = newQuantity[productId] || 0;
@@ -132,43 +134,61 @@ export default function Cart() {
         }
     };
 
-    const handleAddressChange = (sellerId, newAddress) => {
-        setAddresses(prev => ({
-            ...prev,
-            [sellerId]: newAddress,
-        }));
-    };
-
-    const placeOrder = async () => {
+    const placeOrder = async (sellerId) => {
+        if (isSubmitting) return; // 如果正在提交，則不做任何事
+        setIsSubmitting(true); // 設置為提交中
         try {
-            const userId = localStorage.getItem('role');
-            const orderData = cartData.map(seller => ({
-                sellerId: seller.sellerId,
-                products: seller.products.map(product => ({
-                    productId: product.productId,
-                    quantity: product.amount,
-                })),
-                address: addresses[seller.sellerId] || '', // Ensure each seller has an address
-            }));
+            // 檢查地址
+            if (!addresses) {
+                alert('Please enter an address');
+                setIsSubmitting(false);
+                return;
+            }
 
+            const userId = localStorage.getItem('role');
+            const orderData = cartData
+                .filter(seller => seller.sellerId === sellerId) // 只發送選定賣家的資料
+                .map(seller => ({
+                    sellerId: seller.sellerId,
+                    products: seller.products.map(product => ({
+                        productId: product.productId,
+                        quantity: product.amount,
+                        price: product.price,
+                    })),
+                }));
+
+            const startstationadd = '台灣大學';
+            const endstationadd = addresses;
+
+            // 禁用按鈕防止重複提交
             const response = await fetch('http://localhost:5000/add_order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ userId, orderData }),
+                body: JSON.stringify({ userId, orderData, startstationadd, endstationadd }),
             });
 
             const data = await response.json();
+
             if (data.status === 'success') {
                 alert('Order placed successfully');
-                // Optionally, clear cart or redirect to another page
+                // 刪除訂單中的產品
+                for (let i = 0; i < orderData[0].products.length; i++) {
+                    const productId = orderData[0].products[i].productId;
+                    await deleteCartItem(productId);
+                    setIsSubmitting(false);
+                }
             } else {
                 console.error(data.message);
+                setIsSubmitting(false);
             }
         } catch (err) {
             console.error(err);
         }
+
+        // 不再重複抓取 cartData
+        // fetchCartData(); // 刪除這行，避免重複載入
     };
 
     if (cartData.length === 0) {
@@ -178,6 +198,14 @@ export default function Cart() {
     return (
         <div>
             <h1>購物車</h1>
+            <h3>輸入你的地址：</h3>
+            <input
+                type="text"
+                placeholder="Enter address"
+                value={addresses}
+                onChange={(e) => setAddresses(e.target.value)}
+                style={{ width: '300px', height: '30px', marginBottom: '20px' }}
+            />
             {cartData.map((seller, sellerIndex) => (
                 <div key={sellerIndex} className="CartCard">
                     <div className="CartCard-content">
@@ -185,14 +213,8 @@ export default function Cart() {
                             <p style={{ fontWeight: 'bolder', fontSize: '20px' }}>
                                 {seller.sellerName} - ${seller.totalPrice.toFixed(2)}
                             </p>
-                            <input
-                                type="text"
-                                placeholder="Enter address"
-                                value={addresses[seller.sellerId] || ''}
-                                onChange={(e) => handleAddressChange(seller.sellerId, e.target.value)}
-                            />
                             <div className="CartCard-content-button">
-                                <button onClick={placeOrder}>Place Order</button>
+                                <button onClick={() => placeOrder(seller.sellerId)} disabled={isSubmitting}>Place Order</button>
                             </div>
                         </div>
                         <div className="CartCardOrder">
