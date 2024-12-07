@@ -2,50 +2,60 @@ import RecProductCard from '../Card/Rec/RecProductCard';
 import RecCouponCard from '../Card/Rec/RecCouponCard';
 import ProductCard from '../Card/Card/ProductCard';
 
-import{ useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function MarketPage({ }) {
+export default function MarketPage() {
     const [searchContent, setSearchContent] = useState('');
+    const [coupons, setCoupons] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch data on mount
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const response_coupon = await fetch('http://localhost:5000/recommend_coupon', {
+                    method: 'GET',
+                });
+                const data_coupon = await response_coupon.json();
+                console.log('data:', data_coupon);
+                setCoupons(data_coupon.data);
+
+                const response_product = await fetch('http://localhost:5000/get_product', {
+                    method: 'GET',
+                });
+                const data_product = await response_product.json();
+                console.log('data:', data_product);
+                setProducts(data_product.data);
+            } catch (err) {
+                console.error(err);
+                setError('Failed to load data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
+
+    // random 6 products
+    const randomProducts = products.sort(() => Math.random() - 0.5).slice(0, 6);
+
     return (
         <div>
             <div className="RecComponent">
-                {/* # TODO: Get Recommand Product*/}
                 <h2>Recommend Product</h2>
-                <RecProductCard />
-                {/* # TODO: Get Recommand Coupon*/}
+                <RecProductCard products={randomProducts} />
                 <h2>Recommend Coupon</h2>
-                <RecCouponCard searchContent={setSearchContent} />
+                <RecCouponCard coupons={coupons} setSearchContent={setSearchContent} />
             </div>
             <div style={{ height: '6px', backgroundColor: '#192e63', marginTop: '50px', marginBottom: '35px' }} />
-            {/* # TODO: Get Product and split to page*/}
-            <ProductCard searchContent={searchContent}  />
+            <ProductCard products={products} searchContent={searchContent} />
         </div>
     );
 }
-
-/*
-Example of fetching data from backend:
-
-import React, { useEffect, useState } from 'react';
-
-const DataComponent = () => {
-    const [data, setData] = useState([]);
-
-    useEffect(() => {
-        fetch('/get_data')
-            .then(response => response.json())
-            .then(data => setData(data))
-            .catch(error => console.error('Error fetching data:', error));
-    }, []);
-
-    return (
-        <div>
-            <h1>來自後端的數據</h1>
-            <pre>{JSON.stringify(data, null, 2)}</pre>
-        </div>
-    );
-};
-
-export default DataComponent;
-
-*/

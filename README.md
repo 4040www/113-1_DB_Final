@@ -218,9 +218,41 @@
 debug area:
 
 1. 
+購物車應該需要兩個 pk 在後面新增數量的時候會比較好 不然太多重疊的？
 ALTER TABLE cart
 ADD CONSTRAINT unique_cart UNIQUE (userid, productid);
 
 2.
+購物車應該需要兩個 pk 在後面新增數量的時候會比較好 不然太多重疊的？
 ALTER TABLE cart DROP CONSTRAINT cart_pkey;
 ALTER TABLE cart ADD PRIMARY KEY (userid, productid);
+
+3.
+*需要補上
+Not-Interested
+在拿商品資料時 要把沒有興趣的挑掉
+
+4.
+user behavior 
+要多一個 'report'
+DROP TABLE IF EXISTS buyer_behavior;
+CREATE TABLE buyer_behavior (
+    userid      VARCHAR(10) NOT NULL,
+    productid   VARCHAR(10) NOT NULL,
+    behavior    VARCHAR(20) NOT NULL,
+    time        TIMESTAMP NOT NULL,
+    PRIMARY KEY (userid, productid),
+    CONSTRAINT fk_behavior_user FOREIGN KEY (userid) REFERENCES users(userid)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_behavior_product FOREIGN KEY (productid) REFERENCES product(productid)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CHECK (behavior IN ('Favorite', 'Not-Interested', 'Browsed', 'Report'))
+);
+
+5.
+需要多一個地方看消費者檢舉的東西
+
+6.
+賣家需要一個地方紀錄他的運送起始點
