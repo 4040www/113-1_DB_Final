@@ -16,6 +16,7 @@ window.globalPort = 5000;
 function HeaderBar() {
   const navigate = useNavigate();
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'; // 檢查登入狀態
+  const isAdmin = localStorage.getItem('admin') === 'yes'; // 檢查是否為管理員
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn'); // 清除登入狀態
@@ -28,6 +29,10 @@ function HeaderBar() {
       {isLoggedIn && (
         <div style={{color:'white',fontWeight:'bold'}}>你好，{localStorage.getItem('role_name')}</div> // 登入時才顯示登出按鈕
       )}
+      {isAdmin && (
+        <button onClick={() => navigate('/AdminPage')}>管理員頁面</button> // 管理員才顯示管理員頁面按鈕
+      )
+      }
       <button onClick={() => navigate('/YourOrder')}>你的訂單</button>
       <button onClick={() => navigate('/Cart')}>購物車</button>
       <button onClick={() => navigate('/LikeProduct')}>喜歡的商品</button>

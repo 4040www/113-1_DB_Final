@@ -9,47 +9,86 @@ function AdminPage() {
   const [userPage, setUserPage] = useState(1);
 
   const ITEMS_PER_PAGE = 30;
+  const baseUrl = `http://localhost:${window.globalPort}`;
 
-  // 模擬獲取資料
+  // 獲取被檢舉商品
+  const fetchReportedProducts = async () => {
+    const response = await fetch(`${baseUrl}/get_reported_products`);
+    const data = await response.json();
+    console.log(data);
+    setReportedProducts(data.data);
+  };
+
   useEffect(() => {
-    // TODO: 使用 API 獲取資料
-    setReportedProducts([
-      { id: 1, name: 'Product A', reason: 'Fake product' },
-      { id: 2, name: 'Product B', reason: 'Inappropriate content' },
-      // 添加更多測試資料
-    ]);
-
-    setReportedUsers([
-      { id: 1, username: 'User123', reason: 'Spam messages' },
-      { id: 2, username: 'User456', reason: 'Harassment' },
-      // 添加更多測試資料
-    ]);
+    fetchReportedProducts();
   }, []);
 
-  // 刪除商品
-  const deleteProduct = (id) => {
-    setReportedProducts((prev) => prev.filter((product) => product.id !== id));
-    alert(`商品 ID: ${id} 已被刪除`);
+  // 取消檢舉商品
+  const unreportProduct = async (id) => {
+    const response = await fetch(`${baseUrl}/unreport_product`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ productId: id }),
+    });
+    const data = await response.json();
+    if (data.status === 'success') {
+      setReportedProducts((prev) => prev.filter((product) => product.id !== id));
+      alert(data.message);
+    }
   };
 
   // 封鎖商品
-  const blockProduct = (id) => {
-    const product = reportedProducts.find((p) => p.id === id);
-    setReportedProducts((prev) => prev.filter((product) => product.id !== id));
-    setBlockedProducts((prev) => [product, ...prev]);
+  const blockProduct = async (id) => {
+    const response = await fetch(`${baseUrl}/block_product`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ productId: id }),
+    });
+    const data = await response.json();
+    if (data.status === 'success') {
+      const product = reportedProducts.find((p) => p.id === id);
+      setReportedProducts((prev) => prev.filter((product) => product.id !== id));
+      setBlockedProducts((prev) => [product, ...prev]);
+      alert(data.message);
+    }
   };
 
-  // 刪除使用者
-  const deleteUser = (id) => {
-    setReportedUsers((prev) => prev.filter((user) => user.id !== id));
-    alert(`使用者 ID: ${id} 已被刪除`);
+  // 取消檢舉使用者
+  const unreportUser = async (id) => {
+    const response = await fetch(`${baseUrl}/unreport_user`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId: id }),
+    });
+    const data = await response.json();
+    if (data.status === 'success') {
+      setReportedUsers((prev) => prev.filter((user) => user.id !== id));
+      alert(data.message);
+    }
   };
 
   // 封鎖使用者
-  const blockUser = (id) => {
-    const user = reportedUsers.find((u) => u.id === id);
-    setReportedUsers((prev) => prev.filter((user) => user.id !== id));
-    setBlockedUsers((prev) => [user, ...prev]);
+  const blockUser = async (id) => {
+    const response = await fetch(`${baseUrl}/block_user`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId: id }),
+    });
+    const data = await response.json();
+    if (data.status === 'success') {
+      const user = reportedUsers.find((u) => u.id === id);
+      setReportedUsers((prev) => prev.filter((user) => user.id !== id));
+      setBlockedUsers((prev) => [user, ...prev]);
+      alert(data.message);
+    }
   };
 
   // 分頁處理
@@ -66,36 +105,20 @@ function AdminPage() {
       <h1>管理員介面</h1>
       <p>歡迎來到管理員專屬頁面！</p>
 
-      {/* 被檢舉商品 */}
       <h2>被檢舉商品</h2>
       {reportedProducts.length > 0 ? (
         <ul>
           {reportedProducts.map((product) => (
             <li key={product.id}>
-              <strong>{product.name}</strong> - {product.reason}
-              <button onClick={() => deleteProduct(product.id)}>刪除</button>
-              <button onClick={() => blockProduct(product.id)}>封鎖</button>
+              <strong>{product.product_name}</strong> - {product.seller_name}
+              <button onClick={() => unreportProduct(product.productid)}>取消檢舉</button>
+              <button onClick={() => blockProduct(product.productid)}>封鎖商品</button>
+              <button onClick={() => blockUser(product.productid)}>封鎖使用者</button>
             </li>
           ))}
         </ul>
       ) : (
         <p>目前沒有被檢舉的商品。</p>
-      )}
-
-      {/* 被檢舉使用者 */}
-      <h2>被檢舉使用者</h2>
-      {reportedUsers.length > 0 ? (
-        <ul>
-          {reportedUsers.map((user) => (
-            <li key={user.id}>
-              <strong>{user.username}</strong> - {user.reason}
-              <button onClick={() => deleteUser(user.id)}>刪除</button>
-              <button onClick={() => blockUser(user.id)}>封鎖</button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>目前沒有被檢舉的使用者。</p>
       )}
 
       {/* 封鎖商品 */}

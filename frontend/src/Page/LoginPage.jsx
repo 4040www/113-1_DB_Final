@@ -10,6 +10,9 @@ Pass@1234
 bob.lin@yahoo.com
 Secure$5678
 
+george.wu@icloud.com
+Geo$rge123
+
 */
 
 function LoginPage() {
@@ -21,15 +24,6 @@ function LoginPage() {
     try {
       if (username === '' || password === '') {
         alert('帳號或密碼不得為空');
-        return;
-      }
-
-      // 檢查是否為管理員登入
-      if (username === 'admin' && password === 'admin') {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('role', 'admin'); // 儲存角色
-        navigate('/AdminPage'); // 導航到管理員頁面
-        alert('管理者登入成功');
         return;
       }
 
@@ -52,9 +46,11 @@ function LoginPage() {
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('role', user[0].userid); // 儲存角色
           localStorage.setItem('role_name', user[0].name); // 儲存角色
+          localStorage.setItem('admin', 'no');
 
           // 根據角色導向不同頁面
-          if (user.role === 'admin') {
+          if (user[0].state === 'Admin') {
+            localStorage.setItem('admin', 'yes');
             navigate('/AdminPage');
           } else {
             navigate('/');
@@ -68,6 +64,67 @@ function LoginPage() {
     } catch (error) {
       console.error('Login error:', error);
       alert('登入失敗，請稍後再試');
+    }
+  };
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    birthday: '',
+    marketName: '',
+    marketAddress: '',
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleRegister = async () => {
+    const { name, email, phone, password, birthday, marketName, marketAddress } = formData;
+
+    if (!name || !email || !phone || !password) {
+      alert('請填寫所有必填欄位');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:${window.globalPort}/register_user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          password,
+          birthday: birthday || null,
+          mname: marketName || null,
+          maddress: marketAddress || null,
+        }),
+      });
+
+      if (response.ok) {
+        alert('註冊成功！');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          password: '',
+          birthday: '',
+          marketName: '',
+          marketAddress: '',
+        });
+      } else {
+        const errorData = await response.json();
+        alert('註冊失敗: ' + errorData.message);
+      }
+    } catch (err) {
+      console.error('Register error:', err);
+      alert('註冊失敗，請稍後再試');
     }
   };
 
@@ -92,6 +149,71 @@ function LoginPage() {
         onClick={handleLogin}
         style={{ height: '30px', marginTop: '15px', marginBottom: '15px' }}
       >登入</button>
+
+      <div style={{ display: 'flex', flexDirection: 'column', width: '300px', gap: '10px' }}>
+        <h1>註冊</h1>
+        <input
+          type="text"
+          name="name"
+          placeholder="姓名"
+          value={formData.name}
+          onChange={handleChange}
+          style={{ height: '30px' }}
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="電子郵件"
+          value={formData.email}
+          onChange={handleChange}
+          style={{ height: '30px' }}
+        />
+        <input
+          type="text"
+          name="phone"
+          placeholder="手機號碼"
+          value={formData.phone}
+          onChange={handleChange}
+          style={{ height: '30px' }}
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="密碼"
+          value={formData.password}
+          onChange={handleChange}
+          style={{ height: '30px' }}
+        />
+        <input
+          type="date"
+          name="birthday"
+          value={formData.birthday}
+          onChange={handleChange}
+          style={{ height: '30px' }}
+        />
+        <input
+          type="text"
+          name="marketName"
+          placeholder="賣場名稱"
+          value={formData.marketName}
+          onChange={handleChange}
+          style={{ height: '30px' }}
+        />
+        <input
+          type="text"
+          name="marketAddress"
+          placeholder="賣場地址"
+          value={formData.marketAddress}
+          onChange={handleChange}
+          style={{ height: '30px' }}
+        />
+        <button
+          onClick={handleRegister}
+          style={{ height: '30px', marginTop: '15px', marginBottom: '15px' }}
+        >
+          註冊
+        </button>
+      </div>
     </div>
   );
 }

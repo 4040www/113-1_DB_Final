@@ -1,21 +1,19 @@
 /* RecCard */
-
 .RecCard {
     display: flex;
     flex-direction: row;
-    width: 100%;
+    width: 100%; /* 父容器寬度，可以設定為具體值例如 800px */
     overflow-x: auto;
-    gap: 1rem;
+    gap: 1rem; /* 卡片之間的間距 */
 }
 
 .RecCard-content {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    width: 200px;
+    width: 300px;
     height: auto;
     padding: 1rem;
-    border:black 1px solid;
+    border: black 1px solid;
     background-color: #f9a263;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }

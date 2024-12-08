@@ -8,6 +8,9 @@ export default function YourMarket() {
   const [uploadIsOpen, setUploadIsOpen] = useState(false);
   const [couponIsOpen, setCouponIsOpen] = useState(false);
   const [coupon_data, setCoupon] = useState([]);
+  const [product_data, setProduct] = useState([]);
+  const [order_data, setOrder] = useState([]);
+  const [market_data, setMarket] = useState([]);
 
   const openUpload = () => setUploadIsOpen(true);
   const closeUpload = () => setUploadIsOpen(false);
@@ -15,34 +18,169 @@ export default function YourMarket() {
   const openCoupon = () => setCouponIsOpen(true);
   const closeCoupon = () => setCouponIsOpen(false);
 
+  const fetchCouponData = async () => {
+    try {
+      // get coupon
+      const userId = localStorage.getItem('role'); // Retrieve user ID from localStorage
+      if (!userId) throw new Error("User ID not found");
+
+      const response = await fetch(`http://localhost:${window.globalPort}/get_coupon_mine?userid=${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
+
+      const data_coupon = await response.json();
+      console.log('Fetched coupons:', data_coupon); // Debug log
+
+      // Ensure the data structure is valid
+      if (data_coupon.status === 'success' && Array.isArray(data_coupon.data)) {
+        setCoupon(data_coupon.data); // Update state with fetched orders
+      } else {
+        throw new Error('Unexpected response structure');
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setCoupon([]); // Clear orders on error
+    }
+  };
+
   // Fetch orders on mount
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // get coupon
-        const userId = localStorage.getItem('role'); // Retrieve user ID from localStorage
-        if (!userId) throw new Error("User ID not found");
+    fetchCouponData();
+  }, []);
 
-        const response = await fetch(`http://localhost:${window.globalPort}/get_coupon_mine?userid=${userId}`);
-        if (!response.ok) throw new Error('Failed to fetch orders');
+  const fetchProductData = async () => {
+    try {
+      const userId = localStorage.getItem('role');
+      if (!userId) throw new Error("User ID not found");
 
-        const data_coupon = await response.json();
-        console.log('Fetched coupons:', data_coupon); // Debug log
+      const response = await fetch(`http://localhost:${window.globalPort}/get_product_mine?userid=${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
 
-        // Ensure the data structure is valid
-        if (data_coupon.status === 'success' && Array.isArray(data_coupon.data)) {
-          setCoupon(data_coupon.data); // Update state with fetched orders
-        } else {
-          throw new Error('Unexpected response structure');
-        }
-      } catch (err) {
-        console.error('Error fetching orders:', err);
-        setCoupon([]); // Clear orders on error
+      const data_product = await response.json();
+      console.log('Fetched products:', data_product); // Debug log
+
+      if (data_product.status === 'success' && Array.isArray(data_product.data)) {
+        setProduct(data_product.data);
+      } else {
+        throw new Error('Unexpected response structure');
       }
-    };
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setProduct([]);
+    }
+  };
 
-    fetchData();
-  }, [coupon_data]);
+  useEffect(() => {
+    fetchProductData();
+  }, []);
+
+  const fetchOrderData = async () => {
+    try {
+      const sellerId = localStorage.getItem('role');
+      if (!sellerId) throw new Error("User ID not found");
+
+      const response = await fetch(`http://localhost:${window.globalPort}/get_order_seller?sellerid=${sellerId}`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
+
+      const data_order = await response.json();
+      console.log('Fetched orders:', data_order); // Debug log
+
+      if (data_order.status === 'success' && Array.isArray(data_order.data)) {
+        setOrder(data_order.data);
+      } else {
+        throw new Error('Unexpected response structure');
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setOrder([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrderData();
+  }, []);
+
+  const fetchMarketData = async () => {
+    try {
+      const userId = localStorage.getItem('role');
+      if (!userId) throw new Error("User ID not found");
+      
+      const response = await fetch(`http://localhost:${window.globalPort}/get_market?userid=${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch market data');
+
+      const data = await response.json();
+      console.log('Fetched market data:', data.data); // Debug log
+
+      if (data.status === 'success' && Array.isArray(data.data)) {
+        setMarket(data.data[0]);
+      } else {
+        throw new Error('Unexpected response structure');
+      }
+    } catch (err) {
+      console.error('Error fetching market data:', err);
+      setMarket([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchMarketData();
+  }, []);
+
+  const handleChangeMarketName = async () => {
+    try {
+      const userId = localStorage.getItem('role');
+      if (!userId) throw new Error("User ID not found");
+
+      const marketName = document.getElementsByName('marketName')[0].value;
+      if (!marketName) throw new Error("Market Name not found");
+      console.log(marketName, userId);
+      
+      const response = await fetch(`http://localhost:${window.globalPort}/change_market_name`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, marketName }),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        alert('Market name changed successfully!');
+        fetchMarketData();
+      } else {
+        throw new Error(data.message || 'Failed to change market name');
+      }
+    } catch (err) {
+      console.error('Error changing market name:', err);
+      alert('Failed to change market name');
+    }
+  };
+
+  const handelChangeMarketAddress = async () => {
+    try {
+      const userId = localStorage.getItem('role');
+      if (!userId) throw new Error("User ID not found");
+
+      const marketAddress = document.getElementsByName('marketAddress')[0].value;
+      if (!marketAddress) throw new Error("Market Address not found");
+      
+      const response = await fetch(`http://localhost:${window.globalPort}/change_market_address`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, marketAddress }),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        alert('Market address changed successfully!');
+        fetchMarketData();
+      } else {
+        throw new Error(data.message || 'Failed to change market address');
+      }
+    } catch (err) {
+      console.error('Error changing market address:', err);
+      alert('Failed to change market address');
+    }
+  };
 
   const handleUploadProduct = async (product) => {
     try {
@@ -56,6 +194,7 @@ export default function YourMarket() {
       const data = await response.json();
       if (data.status === 'success') {
         alert(`Product uploaded successfully! Product ID: ${data.productId}`);
+        fetchProductData();
       } else {
         throw new Error(data.message || 'Failed to upload product');
       }
@@ -64,6 +203,7 @@ export default function YourMarket() {
       alert('Failed to upload product');
     }
   };
+
 
   const handleAddCoupon = async (coupon) => {
     try {
@@ -78,6 +218,7 @@ export default function YourMarket() {
       const data = await response.json();
       if (data.status === 'success') {
         alert(`Coupon added successfully! Coupon ID: ${data.couponId}`);
+        fetchCouponData();
       } else {
         throw new Error(data.message || 'Failed to add coupon');
       }
@@ -87,12 +228,14 @@ export default function YourMarket() {
     }
   };
 
+
+
   return (
     <div className="YourMarket">
       {uploadIsOpen && (
         <div className="modal">
           <div>
-            <h2>Upload New Product</h2>
+            <h2>新增新的商品</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -120,7 +263,7 @@ export default function YourMarket() {
               </label>
               <br />
               <label>
-                Quality:
+                Quantity:
                 <input type="number" name="quality" required />
               </label>
               <br />
@@ -153,7 +296,7 @@ export default function YourMarket() {
       {couponIsOpen && (
         <div className="modal">
           <div>
-            <h2>Add New Coupon</h2>
+            <h2>新增優惠券</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -193,10 +336,15 @@ export default function YourMarket() {
           </div>
         </div>
       )}
-
-      <div className="RecComponent">
+      <h2>賣場名稱：{market_data.mname}</h2>
+      <input type="text" name="marketName" required />
+      <button onClick={()=>handleChangeMarketName()}>更改</button>
+      <h2>賣場地址：{market_data.maddress}</h2>
+      <input type="text" name="marketAddress" required />
+      <button onClick={()=>handelChangeMarketAddress() }>更改</button>
+      <div className="">
         <h2>Your Coupon List</h2>
-        <YourCouponCard coupon_data={coupon_data} setCoupon={setCoupon}/>
+        <YourCouponCard coupon_data={coupon_data} setCoupon={setCoupon} />
       </div>
 
       <div className="YourMarketNav">
@@ -211,8 +359,8 @@ export default function YourMarket() {
       <div style={{ height: '6px', backgroundColor: '#192e63', marginBottom: '35px' }} />
 
       <div className="YourMarketCard">
-        <YourProductCard />
-        <CustomerOrder />
+        <YourProductCard product_data={product_data} fetchProductData={fetchProductData} setProduct={setProduct} />
+        <CustomerOrder order_data={order_data} fetchOrderData={fetchOrderData} />
       </div>
     </div>
   );

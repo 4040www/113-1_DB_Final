@@ -69,13 +69,38 @@ def get_user_login_info():
 # 產品資料
 @app.route('/get_product', methods=['GET'])
 def get_product():
-    result = execute_query("""
-                        SELECT 
-                            p.*, 
-                            m.mname AS market_name     
-                        FROM product p
-                        JOIN market m ON p.sellerid = m.userid
-                       """)
+    user_id = request.args.get('userId')
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing userId"}), 400
+
+    query = """
+        SELECT 
+            p.*, 
+            m.mname AS market_name     
+        FROM product p
+        JOIN market m ON p.sellerid = m.userid
+        WHERE p.sellerid != %s
+    """
+    result = execute_query(query, (user_id,))
+    return jsonify(result)
+
+
+# 獲得自己的商品
+@app.route('/get_product_mine', methods=['GET'])
+def get_product_mine():
+    user_id = request.args.get('userid')
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing userid"}), 400
+
+    query = """
+        SELECT 
+            p.*, 
+            m.mname AS market_name     
+        FROM product p
+        JOIN market m ON p.sellerid = m.userid
+        WHERE p.sellerid = %s
+    """
+    result = execute_query(query, (user_id,))
     return jsonify(result)
 
 # 購物車資料
@@ -232,8 +257,165 @@ def get_order_product():
     result = execute_query(query, (order_id,))
     return jsonify(result)
 
+# 賣家訂單資料
+@app.route('/get_order_seller', methods=['GET'])
+def get_order_seller():
+    seller_id = request.args.get('sellerid')
+    if not seller_id:
+        return jsonify({"status": "error", "message": "Missing userid"}), 400
+
+    # 查詢訂單資料
+    query = """
+        SELECT 
+            o.orderid,
+            o.otime,
+            o.amount,
+            o.method,
+            o.state,
+            o.review,
+            d.start_station_add,
+            d.end_station_add,
+            u.name AS buyer_name
+        FROM orders o
+        JOIN delivery d ON o.orderid = d.orderid
+        JOIN users u ON o.buyerid = u.userid
+        WHERE o.sellerid = %s
+    """
+    result = execute_query(query, (seller_id,))
+    if result["status"] == "error":
+        return jsonify(result), 500
+
+    orders = result.get("data", [])
+
+    # 查詢每個訂單的商品資料
+    for order in orders:
+        order_id = order['orderid']
+        query_products = """
+            SELECT 
+                op.productid,
+                op.quantity,
+                p.pname AS product_name,
+                p.price,
+                p.sellerid,
+                m.mname AS seller_name
+            FROM order_product op
+            JOIN product p ON op.productid = p.productid
+            JOIN market m ON p.sellerid = m.userid
+            WHERE op.orderid = %s
+        """
+        product_result = execute_query(query_products, (order_id,))
+        if product_result["status"] == "error":
+            return jsonify(product_result), 500
+
+        order['products'] = product_result.get("data", [])  # Add products to each order
+
+    return jsonify({"status": "success", "data": orders})
+
+# 賣場資料
+@app.route('/get_market', methods=['GET'])
+def get_market():
+    user_id = request.args.get('userid')
+    result = execute_query("SELECT * FROM market WHERE userid = %s", (user_id,))
+    return jsonify(result)
+
+# 檢舉商品資料
+@app.route('/get_reported_products', methods=['GET'])
+def get_reported_products():
+    query = """
+        SELECT 
+            p.productid,
+            p.pname AS product_name,
+            p.price,
+            p.sellerid,
+            u.name AS seller_name
+        FROM product p
+        JOIN users u ON p.sellerid = u.userid
+        JOIN buyer_behavior bb ON p.productid = bb.productid
+        WHERE bb.behavior = 'Report'
+    """
+    result = execute_query(query)
+    return jsonify(result)
 
 # --- POST ----------------------
+
+# 註冊
+@app.route('/register_user', methods=['POST'])
+def register_user():
+    data = request.json
+    required_fields = ['name', 'email', 'phone', 'password']
+
+    # 檢查必填欄位是否齊全
+    if not all(field in data and data[field] for field in required_fields):
+        return jsonify({"status": "error", "message": "缺少必填欄位"}), 400
+
+    user_id = generate_id()  # 自行生成唯一的 `userid`
+    name = data['name']
+    email = data['email']
+    phone = data['phone']
+    password = data['password']
+    birthday = data.get('birthday')  # 非必填
+    state = 'Enable'
+    mname = data.get('mname')  # 非必填
+    maddress = data.get('maddress') # 非必填
+
+    try:
+        query = """
+            INSERT INTO users (userid, name, email, phone, password, birthday, state)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        execute_query(query, (user_id, name, email, phone, password, birthday, state), fetch=False)
+
+
+        query = """
+            INSERT INTO market (userid, mname, maddress)
+            VALUES (%s, %s, %s)
+        """
+        execute_query(query, (user_id, mname, maddress), fetch=False)
+
+        return jsonify({"status": "success", "message": "註冊成功"}), 201
+    except Exception as e:
+        print(f"Error during registration: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# 改賣場名稱
+@app.route('/change_market_name', methods=['PUT'])
+def change_market_name():
+    data = request.json
+    required_fields = ['userId', 'marketName']
+
+    # 檢查資料是否齊全
+    if not all(field in data and data[field] for field in required_fields):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+
+    user_id = data['userId']
+    new_name = data['marketName']
+
+    if not user_id or not new_name:
+        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
+    query = "UPDATE market SET mname = %s WHERE userid = %s"
+    result = execute_query(query, (new_name, user_id), fetch=False)
+    return jsonify(result)
+
+# 改賣場地址
+@app.route('/change_market_address', methods=['PUT'])
+def change_market_address():
+    data = request.json
+    required_fields = ['userId', 'marketAddress']
+
+    # 檢查資料是否齊全
+    if not all(field in data and data[field] for field in required_fields):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+
+    user_id = data['userId']
+    new_address = data['marketAddress']
+
+    if not user_id or not new_address:
+        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
+    query = "UPDATE market SET maddress = %s WHERE userid = %s"
+    result = execute_query(query, (new_address, user_id), fetch=False)
+    return jsonify(result)
 
 # 放入購物車
 @app.route('/add_to_cart', methods=['POST'])
@@ -331,6 +513,13 @@ def add_order():
                 VALUES (%s, %s, %s)
             """
             execute_query(query_order_product, (order_id, product_id, quantity), fetch=False)
+            
+            # updata product storage
+            query_update_product = """
+                UPDATE product SET storage = storage - %s WHERE productid = %s
+                VALUES (%s, %s)
+            """ 
+            execute_query(query_update_product, (quantity, product_id), fetch=False)
 
         # 第 3 步：更新订单金额
         query_update_order = """
@@ -402,6 +591,22 @@ def refund_request():
     execute_query(query, (behavior, order_id), fetch=False)
     return jsonify({"status": "success", "message": "Refund requested successfully"})
 
+# 賣家變更訂單狀態
+@app.route('/change_order_state', methods=['PUT'])
+def change_order_state():
+    order_id = request.args.get('orderId')
+    behavior = request.args.get('behavior')
+
+    if not order_id or not behavior:
+        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
+    query = """
+        UPDATE orders SET state = %s WHERE orderId = %s
+    """
+    execute_query(query, (behavior, order_id), fetch=False)
+    return jsonify({"status": "success", "message": "Refund requested successfully"})
+
+
 # 上架商品
 @app.route('/upload_product', methods=['POST'])
 def upload_product():
@@ -419,17 +624,20 @@ def upload_product():
     period = data['refundPeriod']
     size = data['size']
     color = data['color']
+    state = 'Available'  # 默認設為 'Available'
+
+    product_id = generate_id()
 
     try:
         # 使用 SQL 序列來生成 product_id
         query = """
-            INSERT INTO product (pname, price, sellerid, storage, period, size, color)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING productid
+            INSERT INTO product (productid, pname, price, sellerid, storage, period, state, size, color)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        result = execute_query(query, (product_name, price, user_id, storage, period, size, color))
+        result = execute_query(query, (product_id, product_name, price, user_id, storage, period, state, size, color), fetch=False)
+
         if result["status"] == "success":
-            return jsonify({"status": "success", "productId": result["data"][0]["productid"]}), 200
+            return jsonify({"status": "success"}), 200
         else:
             raise Exception("Failed to insert product")
     except Exception as e:
@@ -473,6 +681,17 @@ def add_coupon():
 
 
 # --- DELETE ----------------------
+
+# 刪除商品
+@app.route('/delete_product', methods=['DELETE'])
+def delete_product():
+    product_id = request.args.get('productid')
+    if not product_id:
+        return jsonify({"status": "error", "message": "Missing productid"}), 400
+
+    query = "DELETE FROM product WHERE productid = %s"
+    result = execute_query(query, (product_id,), fetch=False)
+    return jsonify(result)
 
 # 刪除購物車商品
 @app.route('/delete_cart_item', methods=['DELETE'])

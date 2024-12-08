@@ -24,7 +24,7 @@ export default function YourCouponCard({ coupon_data, setCoupon }) {
         <div className='RecCard'>
             {coupon_data && coupon_data.length > 0 ? (
                 coupon_data.map((coupon, index) => (
-                    <div key={index} className="RecCard-content">
+                    <div key={coupon.couponid} className="RecCard-content">
                         <h3>{coupon.content}</h3>
                         <div>more than ${coupon.condition}</div>
                         <div>Start at {new Date(coupon.start_date).toLocaleDateString()}</div>

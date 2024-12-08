@@ -14,6 +14,7 @@ export default function MarketPage() {
     // Fetch data on mount
     useEffect(() => {
         const fetchData = async () => {
+            const userId = localStorage.getItem('role');
             setLoading(true);
             try {
                 const response_coupon = await fetch(`http://localhost:${window.globalPort}/recommend_coupon`, {
@@ -23,7 +24,7 @@ export default function MarketPage() {
                 console.log('data:', data_coupon);
                 setCoupons(data_coupon.data);
 
-                const response_product = await fetch(`http://localhost:${window.globalPort}/get_product`, {
+                const response_product = await fetch(`http://localhost:${window.globalPort}/get_product?userId=${userId}`, {
                     method: 'GET',
                 });
                 const data_product = await response_product.json();

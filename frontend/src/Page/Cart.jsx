@@ -161,7 +161,7 @@ export default function Cart() {
             const endstationadd = addresses;
 
             // 禁用按鈕防止重複提交
-            const response = await fetch('http://localhost:${window.globalPort}/add_order', {
+            const response = await fetch(`http://localhost:${window.globalPort}/add_order`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
