@@ -269,7 +269,8 @@ CREATE TABLE buyer_behavior (
 10.
 State 訂單狀態 varchar (20) Not Null {Confirm, Processing, Cancel}
 代表的是 確認訂單、 取消訂單確認中、已被取消
-可能改成 {Confirm, CancelProcessing, Canceled, Finished} 會比較好
+可能改成 {Confirmed, Processing, Finished, CancelWaiting, Canceled} 會比較好
+（賣家確認訂單、訂單商品運送中、訂單完成、買家取消訂單確認中、賣家確認取消成功）
 
 11.
-喜歡的商品加入購物車後要刪除？
+喜歡的商品加入購物車後要刪除？（毛覺得不用！！）
