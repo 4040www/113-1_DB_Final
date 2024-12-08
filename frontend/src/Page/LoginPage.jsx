@@ -34,24 +34,24 @@ function LoginPage() {
       }
 
       // 非管理員帳號的登入處理
-      const response = await fetch('http://localhost:5000/get_user_login_info?email=' + username);
+      const response = await fetch(`http://localhost:${window.globalPort}/get_user_login_info?email=` + username);
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
 
       const data = await response.json();
-      console.log('data:', data);
+      console.log('data:', data.data);
 
-      if (data.length > 0) {
-        const user = data[0];
-        console.log(user.password);
+      if (data.data.length > 0) {
+        const user = data.data;
+        console.log(user[0].password);
         console.log(password);
 
-        if (user.password === password) {
+        if (user[0].password === password) {
           localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('role', user.userid); // 儲存角色
-          localStorage.setItem('role_name', user.name); // 儲存角色
+          localStorage.setItem('role', user[0].userid); // 儲存角色
+          localStorage.setItem('role_name', user[0].name); // 儲存角色
 
           // 根據角色導向不同頁面
           if (user.role === 'admin') {

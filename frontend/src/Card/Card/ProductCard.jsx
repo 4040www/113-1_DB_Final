@@ -49,7 +49,7 @@ export default function ProductCard({ products, searchContent }) {
         try {
             const userId = localStorage.getItem('role');
             const response = await fetch(
-                `http://localhost:5000/add_to_cart?userid=${userId}&productid=${productId}`,
+                `http://localhost:${window.globalPort}/add_to_cart?userid=${userId}&productid=${productId}`,
                 { method: 'POST' }
             );
             if (!response.ok) throw new Error('Failed to add to cart');
@@ -64,7 +64,7 @@ export default function ProductCard({ products, searchContent }) {
         try {
             const userId = localStorage.getItem('role');
             const response = await fetch(
-                `http://localhost:5000/userbehavior?userid=${userId}&productid=${productId}&behavior=${behavior}`,
+                `http://localhost:${window.globalPort}/userbehavior?userid=${userId}&productid=${productId}&behavior=${behavior}`,
                 { method: 'POST' }
             );
             if (!response.ok) throw new Error('Failed to like product');

@@ -11,6 +11,8 @@ import LikeProduct from './Page/LikeProduct';
 
 import ProtectedRoute from './components/ProtectedRoute';
 
+window.globalPort = 5000;
+
 function HeaderBar() {
   const navigate = useNavigate();
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'; // 檢查登入狀態

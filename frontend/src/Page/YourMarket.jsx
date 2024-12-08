@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 export default function YourMarket() {
   const [uploadIsOpen, setUploadIsOpen] = useState(false);
   const [couponIsOpen, setCouponIsOpen] = useState(false);
-  const [orders, setOrders] = useState([]);
+  const [coupon_data, setCoupon] = useState([]);
 
   const openUpload = () => setUploadIsOpen(true);
   const closeUpload = () => setUploadIsOpen(false);
@@ -17,31 +17,75 @@ export default function YourMarket() {
 
   // Fetch orders on mount
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
       try {
-        const userId = localStorage.getItem('userid'); // Retrieve user ID from localStorage
+        // get coupon
+        const userId = localStorage.getItem('role'); // Retrieve user ID from localStorage
         if (!userId) throw new Error("User ID not found");
 
-        const response = await fetch(`http://localhost:5000/get_order?userid=${userId}`);
+        const response = await fetch(`http://localhost:${window.globalPort}/get_coupon_mine?userid=${userId}`);
         if (!response.ok) throw new Error('Failed to fetch orders');
-        
-        const data = await response.json();
-        console.log('Fetched orders:', data); // Debug log
-        
+
+        const data_coupon = await response.json();
+        console.log('Fetched coupons:', data_coupon); // Debug log
+
         // Ensure the data structure is valid
-        if (data.status === 'success' && Array.isArray(data.data)) {
-          setOrders(data.data); // Update state with fetched orders
+        if (data_coupon.status === 'success' && Array.isArray(data_coupon.data)) {
+          setCoupon(data_coupon.data); // Update state with fetched orders
         } else {
           throw new Error('Unexpected response structure');
         }
       } catch (err) {
         console.error('Error fetching orders:', err);
-        setOrders([]); // Clear orders on error
+        setCoupon([]); // Clear orders on error
       }
     };
 
-    fetchOrders();
-  }, []); // Empty dependency array to run only once on mount
+    fetchData();
+  }, [coupon_data]);
+
+  const handleUploadProduct = async (product) => {
+    try {
+      const response = await fetch(`http://localhost:${window.globalPort}/upload_product`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(product),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        alert(`Product uploaded successfully! Product ID: ${data.productId}`);
+      } else {
+        throw new Error(data.message || 'Failed to upload product');
+      }
+    } catch (err) {
+      console.error('Error uploading product:', err);
+      alert('Failed to upload product');
+    }
+  };
+
+  const handleAddCoupon = async (coupon) => {
+    try {
+      console.log(coupon);
+      const response = await fetch(`http://localhost:${window.globalPort}/add_coupon`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(coupon),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        alert(`Coupon added successfully! Coupon ID: ${data.couponId}`);
+      } else {
+        throw new Error(data.message || 'Failed to add coupon');
+      }
+    } catch (err) {
+      console.error('Error adding coupon:', err);
+      alert('Failed to add coupon');
+    }
+  };
 
   return (
     <div className="YourMarket">
@@ -49,25 +93,54 @@ export default function YourMarket() {
         <div className="modal">
           <div>
             <h2>Upload New Product</h2>
-            <form>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const product = {
+                  userId: localStorage.getItem('role'),
+                  productName: e.target.productName.value,
+                  price: e.target.price.value,
+                  storage: e.target.quality.value,
+                  refundPeriod: e.target.refundPeriod.value,
+                  size: e.target.size.value,
+                  color: e.target.color.value,
+                };
+                handleUploadProduct(product);
+                closeUpload();
+              }}
+            >
               <label>
                 Product Name:
-                <input type="text" name="productName" />
+                <input type="text" name="productName" required />
               </label>
               <br />
               <label>
                 Price:
-                <input type="number" name="price" />
+                <input type="number" name="price" required />
               </label>
               <br />
               <label>
                 Quality:
-                <input type="number" name="quality" />
+                <input type="number" name="quality" required />
               </label>
               <br />
               <label>
                 Refund Period:
-                <input type="number" name="refundPeriod" />
+                <input type="number" name="refundPeriod" required />
+              </label>
+              <br />
+              <label>
+                Size:
+                <select name="size" required>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                </select>
+              </label>
+              <br />
+              <label>
+                Color:
+                <input type="text" name="color" required />
               </label>
               <br />
               <button type="submit">Submit</button>
@@ -81,17 +154,39 @@ export default function YourMarket() {
         <div className="modal">
           <div>
             <h2>Add New Coupon</h2>
-            <form>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const coupon = {
+                  content: e.target.content.value,
+                  condition: e.target.condition.value,
+                  userid: localStorage.getItem('role'),
+                  endDate: e.target.endDate.value,
+                  quantity: e.target.quantity.value,
+                };
+                handleAddCoupon(coupon);
+                closeCoupon();
+              }}
+            >
               <label>
-                Product Name:
-                <input type="text" name="productName" />
+                Content:
+                <input type="text" name="content" required />
               </label>
               <br />
               <label>
-                Price:
-                <input type="number" name="price" />
+                Condition:
+                <input type="text" name="condition" required />
               </label>
               <br />
+              <label>
+                Expire Date:
+                <input type="date" name="endDate" required />
+              </label>
+              <br />
+              <label>
+                Quantity:
+                <input type="number" name="quantity" required />
+              </label>
               <button type="submit">Submit</button>
               <button type="button" onClick={closeCoupon}>Close</button>
             </form>
@@ -101,7 +196,7 @@ export default function YourMarket() {
 
       <div className="RecComponent">
         <h2>Your Coupon List</h2>
-        <YourCouponCard />
+        <YourCouponCard coupon_data={coupon_data} setCoupon={setCoupon}/>
       </div>
 
       <div className="YourMarketNav">
@@ -114,7 +209,7 @@ export default function YourMarket() {
       </div>
 
       <div style={{ height: '6px', backgroundColor: '#192e63', marginBottom: '35px' }} />
-      
+
       <div className="YourMarketCard">
         <YourProductCard />
         <CustomerOrder />

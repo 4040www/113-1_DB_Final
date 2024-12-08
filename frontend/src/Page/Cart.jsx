@@ -4,14 +4,14 @@ export default function Cart() {
     const [cartData, setCartData] = useState([]);
     const [newQuantity, setNewQuantity] = useState({}); // Used to store new quantities of products
     const [addresses, setAddresses] = useState(""); // Used to store addresses per seller
-    const [selectedSellers, setSelectedSellers] = useState({}); // New state to track selected sellers for order
+    const [payMethod, setpayMethod] = useState({}); // New state to track selected sellers for order
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch cart data from backend
     const fetchCartData = async () => {
         try {
             const userId = localStorage.getItem('role'); // Corrected to 'userId'
-            const response = await fetch(`http://localhost:5000/get_cart?userid=${userId}`);
+            const response = await fetch(`http://localhost:${window.globalPort}/get_cart?userid=${userId}`);
             if (!response.ok) throw new Error('Failed to fetch cart data');
             const data = await response.json();
             console.log('Fetched cart data:', data); // Debugging line
@@ -58,7 +58,7 @@ export default function Cart() {
     const updateQuantity = async (productId, newQuantity) => {
         try {
             const userId = localStorage.getItem('role');
-            const response = await fetch(`http://localhost:5000/update_cart_item?userid=${userId}&productid=${productId}&quantity=${newQuantity}`, {
+            const response = await fetch(`http://localhost:${window.globalPort}/update_cart_item?userid=${userId}&productid=${productId}&quantity=${newQuantity}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ export default function Cart() {
     const deleteCartItem = async (productId) => {
         try {
             const userId = localStorage.getItem('role');
-            const response = await fetch(`http://localhost:5000/delete_cart_item?userid=${userId}&productid=${productId}`, {
+            const response = await fetch(`http://localhost:${window.globalPort}/delete_cart_item?userid=${userId}&productid=${productId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -156,17 +156,17 @@ export default function Cart() {
                         price: product.price,
                     })),
                 }));
-
+            const method = payMethod;
             const startstationadd = '台灣大學';
             const endstationadd = addresses;
 
             // 禁用按鈕防止重複提交
-            const response = await fetch('http://localhost:5000/add_order', {
+            const response = await fetch('http://localhost:${window.globalPort}/add_order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ userId, orderData, startstationadd, endstationadd }),
+                body: JSON.stringify({ userId, orderData, startstationadd, endstationadd, method }),
             });
 
             const data = await response.json();
@@ -206,6 +206,16 @@ export default function Cart() {
                 onChange={(e) => setAddresses(e.target.value)}
                 style={{ width: '300px', height: '30px', marginBottom: '20px' }}
             />
+            <h3>選擇付款方式：</h3>
+            <select
+                value={payMethod}
+                onChange={(e) => setpayMethod(e.target.value)}
+                style={{ width: '150px', height: '36px', marginBottom: '20px'  }}
+            >
+                <option value="Credit-Card">信用卡</option>
+                <option value="LinePay">LinePay</option>
+                <option value="Cash">現金</option>
+            </select>
             {cartData.map((seller, sellerIndex) => (
                 <div key={sellerIndex} className="CartCard">
                     <div className="CartCard-content">

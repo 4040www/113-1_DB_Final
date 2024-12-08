@@ -116,6 +116,22 @@ def recommend_coupon():
     result = execute_query(query)
     return jsonify(result)
 
+# 獲得自己的優惠券
+@app.route('/get_coupon_mine', methods=['GET'])
+def get_coupon_mine():
+    user_id = request.args.get('userid')
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing userid"}), 400
+
+    query = """
+        SELECT C.couponid, C.content, C.condition, C.start_date, C.end_date, MC.quantity
+        FROM coupon AS C
+        JOIN market_coupon AS MC ON C.couponid = MC.couponid
+        WHERE MC.userid = %s
+    """
+    result = execute_query(query, (user_id,))
+    return jsonify(result)
+
 # 使用者行為紀錄
 @app.route('/get_user_behavior', methods=['GET'])
 def get_user_behavior():
@@ -280,6 +296,7 @@ def userbehavior():
 def add_order():
     user_id = request.json.get('userId')
     cart_data = request.json.get('orderData')
+    method = request.json.get('method')
 
     if not user_id or not cart_data:
         return jsonify({"status": "error", "message": "缺少必要的参数"}), 400
@@ -290,12 +307,12 @@ def add_order():
         seller_total = 0
 
         # 为每个卖家生成一个唯一的订单 ID
-        order_id = generate_order_id()
+        order_id = generate_id()
 
         # 第 1 步：为每个卖家插入数据到 `orders` 表
         query_order = """
             INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
-            VALUES (%s, NOW(), %s, %s, %s, %s, 'Pending')
+            VALUES (%s, NOW(), %s, %s, %s, %s, 'Confirm')
         """
         execute_query(query_order, (order_id, user_id, seller_id, 0, 'Credit-Card'), fetch=False)  # 先插入订单，金额设为0
         
@@ -344,12 +361,9 @@ def add_order():
     # 返回成功的响应
     return jsonify({"status": "success", "message": "订单成功添加"}), 200
 
-def generate_order_id():
-    # 确保订单 ID 唯一
-    order_id = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-    
-    # 可选：检查数据库中是否已存在该 ID（或者让数据库自动处理自增）
-    return order_id
+def generate_id():
+    id = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+    return id
 
 def calculate_delivery_fee(dmethod):
     # 根据配送方式计算费用
@@ -357,42 +371,106 @@ def calculate_delivery_fee(dmethod):
         return 20  # 快递配送费用
     return 5  # 默认标准配送费用
 
+# 新增評論
+@app.route('/add_comment', methods=['PUT'])
+def add_comment():
+    order_id = request.args.get('orderId')
+    comment = request.args.get('comment')
+
+    if not order_id or not comment:
+        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
+    query = """
+        UPDATE orders SET review = %s WHERE orderId = %s
+    """
+    execute_query(query, (comment, order_id), fetch=False)
+    return jsonify({"status": "success", "message": "Comment added successfully"})
+
+
+# 退款申請
+@app.route('/refund_request', methods=['PUT'])
+def refund_request():
+    order_id = request.args.get('orderId')
+    behavior = request.args.get('behavior')
+
+    if not order_id or not behavior:
+        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
+    query = """
+        UPDATE orders SET state = %s WHERE orderId = %s
+    """
+    execute_query(query, (behavior, order_id), fetch=False)
+    return jsonify({"status": "success", "message": "Refund requested successfully"})
+
 # 上架商品
-@app.route('/upload_product', methods=['GET', 'POST'])
+@app.route('/upload_product', methods=['POST'])
 def upload_product():
     data = request.json
-    user_id = data.get('userId')
-    product_name = data.get('productName')
-    price = data.get('price')
-    storage = data.get('storage')
-    period = data.get('refundPeriod')
-    size = data.get('size')
-    color = data.get('color')
+    required_fields = ['userId', 'productName', 'price', 'storage', 'refundPeriod', 'size', 'color']
 
-    i = query('''
-        SELECT productid FROM product
-        ORDER BY productid DESC
-        LIMIT 1;
-    ''')
-    i = int(i) + 1
-    product_id = str(i).zfill(6)
-
-    if not all([user_id, product_name, price, storage, period, size, color]):
+    # 檢查資料是否齊全
+    if not all(field in data and data[field] for field in required_fields):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
 
+    user_id = data['userId']
+    product_name = data['productName']
+    price = data['price']
+    storage = data['storage']
+    period = data['refundPeriod']
+    size = data['size']
+    color = data['color']
+
     try:
-        # 在 PostgreSQL 中執行插入操作
-        with psycopg2.connect("dbname='' user='postgres' host='localhost' password=" + db_password) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO product (productid, pname, price, sellerid, storage, period, size, color)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (product_id, product_name, price, user_id, storage, period, size, color))
-                conn.commit()
-        return jsonify({"status": "success"}), 200
+        # 使用 SQL 序列來生成 product_id
+        query = """
+            INSERT INTO product (pname, price, sellerid, storage, period, size, color)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING productid
+        """
+        result = execute_query(query, (product_name, price, user_id, storage, period, size, color))
+        if result["status"] == "success":
+            return jsonify({"status": "success", "productId": result["data"][0]["productid"]}), 200
+        else:
+            raise Exception("Failed to insert product")
     except Exception as e:
         print(f"Error uploading product: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+# 新增優惠券
+@app.route('/add_coupon', methods=['POST'])
+def add_coupon():
+    data = request.json
+    required_fields = ['content', 'condition', 'userid', 'endDate', 'quantity']
+
+    if not all(field in data and data[field] for field in required_fields):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+
+    content = data['content']
+    condition = data['condition']
+    userid = data['userid']
+    end_date = data['endDate']
+    coupon_id = generate_id()
+    quantity = data['quantity']
+
+    try:
+        query = """
+            INSERT INTO coupon (couponid, content, condition, start_date, end_date)
+            VALUES (%s, %s, %s, NOW(), %s)
+        """
+        coupon_result = execute_query(query, (coupon_id, content, condition, end_date), fetch=False)
+        if coupon_result["status"] != "success":
+            raise Exception("Failed to insert coupon")
+
+        market_coupon_query = """
+            INSERT INTO market_coupon (userid, couponid, quantity)
+            VALUES (%s, %s, %s)
+        """
+        execute_query(market_coupon_query, (userid, coupon_id, quantity), fetch=False)
+        return jsonify({"status": "success", "couponId": coupon_id}), 200
+    except Exception as e:
+        print(f"Error adding coupon: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 # --- DELETE ----------------------
 
@@ -419,6 +497,20 @@ def clear_cart():
 
     query = "DELETE FROM cart WHERE userid = %s and productid = %s"
     result = execute_query(query, (user_id, product_id), fetch=False)
+    return jsonify(result)
+
+# 刪除優惠券
+@app.route('/delete_coupon', methods=['DELETE'])
+def delete_coupon():
+    coupon_id = request.args.get('couponid')
+    if not coupon_id:
+        return jsonify({"status": "error", "message": "Missing couponid"}), 400
+
+    query = "DELETE FROM market_coupon WHERE couponid = %s"
+    result = execute_query(query, (coupon_id,), fetch=False)
+
+    query = "DELETE FROM coupon WHERE couponid = %s"
+    result = execute_query(query, (coupon_id,), fetch=False)
     return jsonify(result)
 
 # -----------------------------

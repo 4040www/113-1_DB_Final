@@ -7,7 +7,7 @@ export default function LikeProduct() {
     const fetchLikeData = async () => {
         try {
             const userId = localStorage.getItem('role');
-            const response = await fetch(`http://localhost:5000/get_user_behavior?userid=${userId}&behavior=Favorite`);
+            const response = await fetch(`http://localhost:${window.globalPort}/get_user_behavior?userid=${userId}&behavior=Favorite`);
             if (!response.ok) throw new Error('Failed to fetch liked products');
             const data = await response.json();
 
@@ -54,7 +54,7 @@ export default function LikeProduct() {
         try {
             const userId = localStorage.getItem('role');
             const response = await fetch(
-                `http://localhost:5000/add_to_cart?userid=${userId}&productid=${productId}`,
+                `http://localhost:${window.globalPort}/add_to_cart?userid=${userId}&productid=${productId}`,
                 { method: 'POST' }
             );
             if (!response.ok) throw new Error('Failed to add to cart');
@@ -69,7 +69,7 @@ export default function LikeProduct() {
         try {
             const userId = localStorage.getItem('role');
             const response = await fetch(
-                `http://localhost:5000/userbehavior?userid=${userId}&productid=${productId}&behavior=${behavior}`,
+                `http://localhost:${window.globalPort}/userbehavior?userid=${userId}&productid=${productId}&behavior=${behavior}`,
                 { method: 'POST' }
             );
             if (!response.ok) throw new Error('Failed to update product behavior');
@@ -94,7 +94,7 @@ export default function LikeProduct() {
                     <div className="CartCard-content">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                             <p style={{ fontWeight: 'bolder', fontSize: '20px' }}>
-                                {truncate(seller.sellerName, 15)}
+                                {seller.sellerName}
                             </p>
                         </div>
                         <div className="CartCardOrder">

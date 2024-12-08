@@ -7,7 +7,7 @@ export default function RecProductCard({ products }) {
         try {
             const userId = localStorage.getItem('role');
             const response = await fetch(
-                `http://localhost:5000/add_to_cart?userid=${userId}&productid=${productId}`,
+                `http://localhost:${window.globalPort}/add_to_cart?userid=${userId}&productid=${productId}`,
                 { method: 'POST' }
             );
             if (!response.ok) throw new Error('Failed to add to cart');

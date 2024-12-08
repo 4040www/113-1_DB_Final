@@ -16,14 +16,14 @@ export default function MarketPage() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response_coupon = await fetch('http://localhost:5000/recommend_coupon', {
+                const response_coupon = await fetch(`http://localhost:${window.globalPort}/recommend_coupon`, {
                     method: 'GET',
                 });
                 const data_coupon = await response_coupon.json();
                 console.log('data:', data_coupon);
                 setCoupons(data_coupon.data);
 
-                const response_product = await fetch('http://localhost:5000/get_product', {
+                const response_product = await fetch(`http://localhost:${window.globalPort}/get_product`, {
                     method: 'GET',
                 });
                 const data_product = await response_product.json();
