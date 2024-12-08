@@ -98,7 +98,6 @@
 
 以下是根据您的要求修改后的 `README.md` 文件，包含了前端是 React，后端是 Flask 和 PostgreSQL 的描述：
 
-```markdown
 # Timmy Market 線上商城網站
 
 這是一個基於 React 前端與 Flask 後端的線上商城網站，為資料庫課程的期末專案而開發。專案的主要功能包括管理產品、訂單，以及顧客與賣家的互動。
