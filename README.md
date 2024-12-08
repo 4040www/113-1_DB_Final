@@ -98,7 +98,6 @@
 
 以下是根据您的要求修改后的 `README.md` 文件，包含了前端是 React，后端是 Flask 和 PostgreSQL 的描述：
 
-```markdown
 # Timmy Market 線上商城網站
 
 這是一個基於 React 前端與 Flask 後端的線上商城網站，為資料庫課程的期末專案而開發。專案的主要功能包括管理產品、訂單，以及顧客與賣家的互動。
@@ -268,10 +267,12 @@ CREATE TABLE buyer_behavior (
 
 10.
 State 訂單狀態 varchar (20) Not Null {Confirm, Processing, Cancel}
-代表的是 確認訂單、 取消訂單確認中、已被取消
-可能改成 {Confirm, CancelProcessing, Canceled, Finished} 會比較好
+代表的是 確認訂單、取消訂單確認中、已被取消
+可能改成 {Waiting, Confirmed, Processing, Finished, CancelWaiting, Canceled} 會比較好
+（等待賣家確認、賣家確認訂單、訂單商品運送中、訂單完成、買家申請取消訂單 等待賣家確認、確認訂單已被取消）
 
 11.
+<<<<<<< HEAD
 喜歡的商品加入購物車後要刪除？
 
 12.
@@ -285,3 +286,6 @@ port 要說明前後端都要改
 
 15.
 如果註冊重複 不會跳通知
+=======
+喜歡的商品加入購物車後要刪除？（毛覺得不用！）
+>>>>>>> f93509ece78a8516a1ab309c10a6cad755a20c8a
