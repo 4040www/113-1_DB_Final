@@ -6,8 +6,13 @@ from flask_cors import CORS
 import secrets
 import string
 
+import threading
+
+product_lock = threading.Lock()
+coupon_lock = threading.Lock()
+
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # 讀取資料庫密碼
 with open('db_password.txt', 'r') as file:
@@ -30,12 +35,15 @@ def release_psql_connection(conn):
         psql_pool.putconn(conn)
 
 # 通用查詢函數
-def execute_query(query, params=None, fetch=True):
+def execute_query(query, params=None, fetch=True, use_transaction=False):
     conn = get_psql_connection()
     if not conn:
         return {"status": "error", "message": "Database connection failed"}
 
     try:
+        if use_transaction:
+            conn.autocommit = False  # 關閉自動提交，手動控制交易
+
         with conn.cursor() as cursor:
             cursor.execute(query, params)
             if fetch:
@@ -43,13 +51,19 @@ def execute_query(query, params=None, fetch=True):
                 columns = [desc[0] for desc in cursor.description]
                 return {"status": "success", "data": [dict(zip(columns, row)) for row in rows]}
             else:
-                conn.commit()
+                if not use_transaction:  # 非交易模式下立即提交
+                    conn.commit()
                 return {"status": "success"}
     except Exception as e:
+        if use_transaction:
+            conn.rollback()  # 若使用交易模式，出現錯誤時回滾
         print(f"Error executing query: {e}")
         return {"status": "error", "message": str(e)}
     finally:
+        if use_transaction:
+            conn.commit()  # 成功執行所有操作後提交交易
         release_psql_connection(conn)
+
 
 # -----------------------------
 # API 定義
@@ -511,6 +525,21 @@ def userbehavior():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+# 更新庫存的函數
+def update_product_storage(product_id, quantity):
+    with product_lock:  # 使用鎖來保證庫存更新的互斥性
+        query_update_product = """
+            UPDATE product SET storage = storage - %s WHERE productid = %s
+        """
+        execute_query(query_update_product, (quantity, product_id), fetch=False)
+
+# 更新優惠券數量的函數
+def update_coupon_quantity(user_id, couponid):
+    with coupon_lock:  # 使用鎖來保證優惠券更新的互斥性
+        query_coupon = "UPDATE market_coupon SET quantity = quantity - 1 WHERE userid = %s AND couponid = %s"
+        execute_query(query_coupon, (user_id, couponid), fetch=False)
+
 # 新增訂單
 @app.route('/add_order', methods=['POST'])
 def add_order():
@@ -527,7 +556,7 @@ def add_order():
     if not start_station_add or not address:
         return jsonify({"status": "error", "message": "缺少必要的配送信息"}), 400
 
-
+    # 遍歷每個賣家的商品
     for seller in cart_data:
         seller_id = seller.get('sellerId')
         amount = seller.get('amount')
@@ -536,6 +565,7 @@ def add_order():
 
         order_id = generate_id()  # 生成唯一訂單ID
         print(order_id, user_id, seller_id, amount, method, couponid)
+
         # 插入到 `orders` 表
         if(couponid != None):
             query_order = """
@@ -571,11 +601,11 @@ def add_order():
             storage_result = execute_query(query_check_storage, (product_id,))
             if storage_result["status"] == "error":
                 return jsonify(storage_result), 500
-            # 更新 `product` 庫存
-            query_update_product = """
-                UPDATE product SET storage = storage - %s WHERE productid = %s
-            """
-            execute_query(query_update_product, (quantity, product_id), fetch=False)
+            
+            # 使用鎖來保證庫存更新不會發生衝突
+            update_storage_thread = threading.Thread(target=update_product_storage, args=(product_id, quantity))
+            update_storage_thread.start()
+
             # 清空購物車
             query_clear_cart = "DELETE FROM cart WHERE userid = %s and productid = %s"
             execute_query(query_clear_cart, (user_id, product_id), fetch=False)
@@ -593,14 +623,14 @@ def add_order():
             order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, start_station_add, address
         ), fetch=False)
 
-        # 減去優惠券數量
+        # 如果使用了優惠券，則使用鎖來確保更新過程的互斥
         if(couponid):
-            query_coupon = "UPDATE market_coupon SET quantity = quantity - 1 WHERE userid = %s AND couponid = %s"
-            execute_query(query_coupon, (user_id, couponid), fetch=False)
-            
+            coupon_thread = threading.Thread(target=update_coupon_quantity, args=(user_id, couponid))
+            coupon_thread.start()
 
     # 返回成功響應
     return jsonify({"status": "success", "message": "訂單成功添加"}), 200
+
 
 def generate_id():
     id = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
@@ -821,4 +851,4 @@ def unreport_product():
 # -----------------------------
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5000, debug=True)

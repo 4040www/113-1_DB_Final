@@ -1,118 +1,41 @@
 # Timmy Market 線上商城網站
 
-這是一個基於 React 前端與 Flask 後端的線上商城網站，為資料庫課程的期末專案而開發。專案的主要功能包括管理產品、訂單，以及顧客與賣家的互動。
+這是一個基於 React 前端與 Flask 後端的線上商城網站，作為資料庫課程的期末專案而開發。專案的主要功能包括管理產品、訂單，以及顧客與賣家的互動。以下是此專案的詳細介紹與技術架構，並附上 GitHub 專案連結與展示影片連結。
+
+## 目錄
+- [專案簡介](#專案簡介)
+- [功能簡介](#功能簡介)
+- [技術架構](#技術架構)
+- [如何執行](#如何執行)
+- [系統設計與功能](#系統設計與功能)
+- [影片與文件](#影片與文件)
+
+## 專案簡介
+隨著線上購物的趨勢越來越蓬勃，電子商務平台已經成為眾人消費的一個管道。本專案設計了一個名為「提米商城」的電子商務系統，讓買賣雙方可以在此進行線上交易，並提供各種便利的功能。
 
 ## 功能簡介
-- 顧客可以瀏覽商品、加入購物車並下訂單。
-- 賣家可以上架商品、管理庫存和查看訂單。
-- 支援推薦功能，為顧客推薦商品與優惠券。
+- **顧客功能**：
+  - 瀏覽商品：使用者可以瀏覽各種商品，並查看詳細資料。
+  - 加入購物車：顧客可以將商品加入購物車，並進行結帳。
+  - 下訂單：顧客可以選擇付款方式並建立訂單。
+  - 退貨與退款：顧客可以對已下訂單的商品申請退貨或退款。
+  - 優惠券使用：顧客可以領取並使用優惠券以獲得折扣。
+
+- **賣家功能**：
+  - 上架商品：賣家可以上架商品，並管理商品庫存、價格與規格。
+  - 管理訂單：賣家可以查看並處理訂單，並發送物流信息。
+  - 發送優惠券：賣家可以發送優惠券來促進銷售。
+
+- **管理者功能**：
+  - 管理商品：管理者可以下架商品，刪除不當商品並處理商品信息。
+  - 管理使用者：管理者可禁止不當使用者進行交易。
+  - 查詢訂單物流：管理者可以查看訂單的物流狀態。
 
 ## 技術架構
-- **前端**：使用 React 來構建用戶界面，提供動態交互和流暢的使用者體驗。
-- **後端**：使用 Flask 來處理 API 請求，並與 PostgreSQL 數據庫進行數據交互。
-- **資料庫**：使用 PostgreSQL 存儲用戶、訂單、商品等數據。
-
----
-
-## 專案結構
-
-以下是專案的目錄結構以及功能簡述：
-
-```
-113-1_DB_FINAL/
-├── public/                      # 靜態資源文件
-│   ├── favicon.ico              # 項目圖標
-│   ├── index.html               # 主 HTML 文件
-│   ├── manifest.json            # PWA 設置文件
-│   ├── robots.txt               # SEO 文件
-├── src/                         # 源碼文件
-│   ├── Card/                    # 卡片相關的元件
-│   │   ├── Card/                # 通用卡片元件
-│   │   │   ├── ProductCard.jsx  # 商品卡片元件
-│   │   │   ├── YourCouponCard.jsx # 優惠券卡片元件
-│   │   ├── Rec/                 # 推薦相關元件
-│   │   │   ├── RecCouponCard.jsx # 推薦優惠券元件
-│   │   │   ├── RecProductCard.jsx # 推薦商品元件
-│   │   ├── Seller/              # 賣家專用元件
-│   │       ├── CustomerOrder.jsx # 顯示顧客訂單
-│   │       ├── YourProductCard.jsx # 賣家商品卡片
-│   ├── Page/                    # 頁面元件
-│   │   ├── Cart.jsx             # 購物車頁面
-│   │   ├── MarketPage.jsx       # 市場頁面
-│   │   ├── YourOrder.jsx        # 顧客訂單頁面
-│   │   ├── YourMarket.jsx       # 賣家管理頁面
-│   │   ├── Page.css             # 頁面樣式
-│   ├── App.js                   # 主應用程式入口
-│   ├── App.css                  # 全局樣式
-│   ├── index.js                 # ReactDOM 渲染入口
-│   ├── index.css                # 主 CSS
-│   ├── reportWebVitals.js       # 性能測試
-│   ├── setupTests.js            # 測試設置
-├── .gitignore                   # Git 忽略文件
-├── package.json                 # 項目依賴與腳本
-├── README.md                    # 項目說明文件
-```
-
----
-
-## 如何啟動專案
-
-以下是啟動該專案的詳細步驟：
-
-1. 確保您已安裝 [Node.js](https://nodejs.org/) 與 npm（或 yarn）。
-
-2. **克隆專案到本地**：
-   ```bash
-   git clone <你的倉庫網址>
-   cd 113-1_DB_FINAL
-   ```
-
-3. **安裝相依套件**：
-   ```bash
-   npm install
-   ```
-
-4. **啟動開發伺服器**：
-   ```bash
-   npm start
-   ```
-
-5. 在瀏覽器中開啟 [http://localhost:3000](http://localhost:3000) 即可查看網站。
-
----
-
-## 預覽畫面
-如果您有項目預覽圖片，可以在此處附加。
-
----
-
-## 貢獻者
-- [陳庭宇]()  
-- [毛羚芳]()  
-- [陳詣斌](https://github.com/4040www)  
-
-
----
-
-如果需要任何其他修改或添加，隨時告訴我！
-
-以下是根据您的要求修改后的 `README.md` 文件，包含了前端是 React，后端是 Flask 和 PostgreSQL 的描述：
-
-# Timmy Market 線上商城網站
-
-這是一個基於 React 前端與 Flask 後端的線上商城網站，為資料庫課程的期末專案而開發。專案的主要功能包括管理產品、訂單，以及顧客與賣家的互動。
-
-## 功能簡介
-- 顧客可以瀏覽商品、加入購物車並下訂單。
-- 賣家可以上架商品、管理庫存和查看訂單。
-- 支援推薦功能，為顧客推薦商品與優惠券。
-
-## 技術架構
-- **前端**：使用 React 來構建用戶界面，提供動態交互和流暢的使用者體驗。
-- **後端**：使用 Flask 來處理 API 請求，並與 PostgreSQL 數據庫進行數據交互。
-- **資料庫**：使用 PostgreSQL 存儲用戶、訂單、商品等數據。
-
----
+- **前端**：使用 React 建立用戶界面，提供動態交互和流暢的使用者體驗。
+- **後端**：使用 Flask 建立後端服務，處理 API 請求，並與 PostgreSQL 資料庫進行數據交互。
+- **資料庫**：使用 PostgreSQL 作為資料庫，存儲商品、訂單、使用者資料等。
+- **鎖控制**：使用 Python 的 `threading` 模組實現並發控制，防止資源競爭和重複操作，保證系統穩定運行。
 
 ## 專案結構
 
@@ -157,131 +80,62 @@
 ├── README.md                    # 項目說明文件
 ```
 
----
+## 如何執行
 
-## 如何啟動專案
-
-### 前端部分
-
-1. 確保您已安裝 [Node.js](https://nodejs.org/) 與 npm（或 yarn）。
-
-2. **克隆專案到本地**：
+### 後端設置
+1. **安裝虛擬環境**：
    ```bash
-   git clone <你的倉庫網址>
-   cd 113-1_DB_FINAL
+   python3 -m venv venv
+   source venv/bin/activate  # 在 macOS/Linux 上
+   venv\Scripts\activate  # 在 Windows 上
    ```
-3. **安裝相依套件**：
+
+2. **安裝所需套件**：
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **設定環境變數**：
+   在專案根目錄下，創建 `.env` 文件，並設定如下內容：
+   ```env
+   FLASK_APP=app.py
+   FLASK_ENV=development
+   ```
+
+4. **啟動後端服務**：
+   ```bash
+   flask run
+   ```
+
+### 前端設置
+1. **安裝前端依賴**：
+   在前端目錄中運行：
    ```bash
    npm install
    ```
-4. **啟動前端開發伺服器**：
+
+2. **啟動前端開發服務**：
    ```bash
    npm start
    ```
-5. 在瀏覽器中開啟 [http://localhost:3000](http://localhost:3000) 即可查看前端頁面。
 
-### 後端部分
-1. 確保您已安裝 [Python 3.x](https://www.python.org/downloads/)，並且已經安裝了必要的 Python 套件。
-2. **安裝後端依賴**：
-   進入 `backend` 目錄並安裝依賴：
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
-3. **啟動後端伺服器**：
-   ```bash
-   python3 app.py
-   ```
-4. 後端服務將運行於 `http://127.0.0.1:5000`，API 端點也會在這裡提供。
+## 系統設計與功能
 
----
+此系統提供完整的電子商務流程，從商品瀏覽、購物車管理到訂單處理，涵蓋了顧客與賣家的互動需求。系統中的資料庫設計確保了商品與訂單資料的一致性，並使用鎖機制來防止並發問題，保證交易過程的穩定性。
 
-## 預覽畫面
-如果您有項目預覽圖片，可以在此處附加。
+### 資料庫設計
+- **商品資料表**：存儲商品的名稱、描述、價格、庫存等。
+- **訂單資料表**：存儲顧客的訂單詳情，包括訂單狀態、支付方式、配送地址等。
+- **用戶資料表**：儲存顧客與賣家的基本資訊，如帳號、密碼、聯繫方式等。
 
----
+### 鎖控制
+為防止並發交易導致的重複操作或資料不一致問題，本系統使用 `threading.Lock()` 進行鎖控制。系統使用兩個鎖來分別處理商品和優惠券的併發控制，確保在處理商品訂單或優惠券發放時不會發生衝突。
 
-## 貢獻者
-- [陳庭宇]()  
-- [毛羚芳]()  
-- [陳詣斌](https://github.com/4040www)  
+## 影片與文件
+
+- **GitHub 專案連結**：[GitHub Repository](https://github.com/yourusername/timmy-market)
+- **展示影片連結**：[影片展示](https://youtu.be/yourvideolink)
+
+這些資源展示了專案的完整功能與操作流程，您可以進一步了解系統如何運作，並查看實際的操作界面與功能演示。
 
 ---
-
-## 註解
-- 如果需要其他修改或新增功能，請隨時聯繫我們。
-- 如果您有任何問題，請查閱我們的文檔或聯繫專案的貢獻者。
-
-```
-
-debug area:
-
-1. 
-購物車應該需要兩個 pk 在後面新增數量的時候會比較好 不然太多重疊的？
-ALTER TABLE cart
-ADD CONSTRAINT unique_cart UNIQUE (userid, productid);
-
-2.
-購物車應該需要兩個 pk 在後面新增數量的時候會比較好 不然太多重疊的？
-ALTER TABLE cart DROP CONSTRAINT cart_pkey;
-ALTER TABLE cart ADD PRIMARY KEY (userid, productid);
-
-3.
-*需要補上
-Not-Interested
-在拿商品資料時 要把沒有興趣的挑掉
-
-4.
-user behavior 
-要多一個 'report'
-DROP TABLE IF EXISTS buyer_behavior;
-CREATE TABLE buyer_behavior (
-    userid      VARCHAR(10) NOT NULL,
-    productid   VARCHAR(10) NOT NULL,
-    behavior    VARCHAR(20) NOT NULL,
-    time        TIMESTAMP NOT NULL,
-    PRIMARY KEY (userid, productid),
-    CONSTRAINT fk_behavior_user FOREIGN KEY (userid) REFERENCES users(userid)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CONSTRAINT fk_behavior_product FOREIGN KEY (productid) REFERENCES product(productid)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CHECK (behavior IN ('Favorite', 'Not-Interested', 'Browsed', 'Report'))
-);
-
-5.
-需要多一個地方看消費者檢舉的東西
-
-6.
-賣家需要一個地方紀錄他的運送起始點
-
-7.
-訂單費用、付款方式要加（購物車的流程要看一下）下單商品數量會簡少的也要做...
-
-8.
-全部的 UI 有時間可以變好看...（沒有時間了...）
-
-9.
-運送費用
-
-10.
-State 訂單狀態 varchar (20) Not Null {Confirm, Processing, Cancel}
-代表的是 確認訂單、取消訂單確認中、已被取消
-可能改成 {Waiting, Confirmed, Processing, Finished, CancelWaiting, Canceled} 會比較好
-（等待賣家確認、賣家確認訂單、訂單商品運送中、訂單完成、買家申請取消訂單 等待賣家確認、確認訂單已被取消）
-
-11.
-喜歡的商品加入購物車後要刪除？
-
-12.
-port 要說明前後端都要改
-
-13.
-不能買自己的東西（不會顯示自己的商品）
-
-14.
-下訂單的優惠券
-
-15.
-如果註冊重複 不會跳通知
