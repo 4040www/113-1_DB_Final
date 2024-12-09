@@ -127,6 +127,28 @@ def get_cart():
     result = execute_query(query, (user_id,))
     return jsonify(result)
 
+# 獲得可用優惠券
+@app.route('/get_coupon', methods=['GET'])
+def get_coupon():
+    seller_id = request.args.get('sellerid')
+    if not seller_id:
+        return jsonify({"status": "error", "message": "Missing userid"}), 400
+
+    query = """
+        SELECT 
+            C.couponid, 
+            C.content, 
+            C.condition, 
+            C.start_date, 
+            C.end_date, 
+            MC.quantity
+        FROM coupon AS C
+        JOIN market_coupon AS MC ON C.couponid = MC.couponid
+        WHERE MC.userid = %s
+    """
+    result = execute_query(query, (seller_id,))
+    return jsonify(result)
+
 # 優惠券資料
 @app.route('/recommend_coupon', methods=['GET'])
 def recommend_coupon():
@@ -331,7 +353,23 @@ def get_reported_products():
         FROM product p
         JOIN users u ON p.sellerid = u.userid
         JOIN buyer_behavior bb ON p.productid = bb.productid
-        WHERE bb.behavior = 'Report'
+        WHERE bb.behavior = 'Report' AND u.state = 'Enable'
+    """
+    result = execute_query(query)
+    return jsonify(result)
+
+# 檢舉使用者資料
+@app.route('/get_restricted_users', methods=['GET'])
+def get_restricted_users():
+    query = """
+        SELECT 
+            u.userid,
+            u.name,
+            u.email,
+            u.phone,
+            u.birthday
+        FROM users u
+        WHERE u.state = 'Restricted'
     """
     result = execute_query(query)
     return jsonify(result)
@@ -679,6 +717,27 @@ def add_coupon():
         print(f"Error adding coupon: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# 封鎖使用者
+@app.route('/block_user', methods=['PUT'])
+def block_user():
+    user_id = request.args.get('userId')
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing userid"}), 400
+
+    query = "UPDATE users SET state = 'Restricted' WHERE userid = %s"
+    result = execute_query(query, (user_id,), fetch=False)
+    return jsonify(result)
+
+# 解封使用者
+@app.route('/unblock_user', methods=['PUT'])
+def unblock_user():
+    user_id = request.args.get('userId')
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing userid"}), 400
+
+    query = "UPDATE users SET state = 'Enable' WHERE userid = %s"
+    result = execute_query(query, (user_id,), fetch=False)
+    return jsonify(result)
 
 # --- DELETE ----------------------
 
@@ -731,6 +790,19 @@ def delete_coupon():
     query = "DELETE FROM coupon WHERE couponid = %s"
     result = execute_query(query, (coupon_id,), fetch=False)
     return jsonify(result)
+
+# 取消檢舉商品
+@app.route('/unreport_product', methods=['DELETE'])
+def unreport_product():
+    product_id = request.args.get('productId')
+
+    if not product_id:
+        return jsonify({"status": "error", "message": "Missing productid"}), 400
+
+    query = "DELETE FROM buyer_behavior WHERE productid = %s AND behavior = 'Report'"
+    result = execute_query(query, (product_id,), fetch=False)
+    return jsonify(result)
+
 
 # -----------------------------
 

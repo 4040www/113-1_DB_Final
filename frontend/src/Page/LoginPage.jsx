@@ -129,90 +129,93 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '300px', gap: '10px' }}>
-      <h1>登入</h1>
-      <input
-        type="text"
-        placeholder="使用者名稱"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        style={{ height: '30px' }}
-      />
-      <input
-        type="password" // 將密碼框類型改為password
-        placeholder="密碼"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ height: '30px' }}
-      />
-      <button
-        onClick={handleLogin}
-        style={{ height: '30px', marginTop: '15px', marginBottom: '15px' }}
-      >登入</button>
-
+    <div style={{display:'flex', flexDirection: 'row', justifyContent:'center', width:'100%', gap:'180px', marginBottom:'30px'}}>
       <div style={{ display: 'flex', flexDirection: 'column', width: '300px', gap: '10px' }}>
-        <h1>註冊</h1>
+        <h1 style={{textAlign:'center'}}>登入</h1>
         <input
           type="text"
-          name="name"
-          placeholder="姓名"
-          value={formData.name}
-          onChange={handleChange}
+          placeholder="使用者名稱"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           style={{ height: '30px' }}
         />
         <input
-          type="email"
-          name="email"
-          placeholder="電子郵件"
-          value={formData.email}
-          onChange={handleChange}
-          style={{ height: '30px' }}
-        />
-        <input
-          type="text"
-          name="phone"
-          placeholder="手機號碼"
-          value={formData.phone}
-          onChange={handleChange}
-          style={{ height: '30px' }}
-        />
-        <input
-          type="password"
-          name="password"
+          type="password" // 將密碼框類型改為password
           placeholder="密碼"
-          value={formData.password}
-          onChange={handleChange}
-          style={{ height: '30px' }}
-        />
-        <input
-          type="date"
-          name="birthday"
-          value={formData.birthday}
-          onChange={handleChange}
-          style={{ height: '30px' }}
-        />
-        <input
-          type="text"
-          name="marketName"
-          placeholder="賣場名稱"
-          value={formData.marketName}
-          onChange={handleChange}
-          style={{ height: '30px' }}
-        />
-        <input
-          type="text"
-          name="marketAddress"
-          placeholder="賣場地址"
-          value={formData.marketAddress}
-          onChange={handleChange}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           style={{ height: '30px' }}
         />
         <button
-          onClick={handleRegister}
+          onClick={handleLogin}
           style={{ height: '30px', marginTop: '15px', marginBottom: '15px' }}
-        >
-          註冊
-        </button>
+        >登入</button>
+      </div>
+      <div>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '300px', gap: '10px' }}>
+          <h1 style={{textAlign:'center'}}>註冊</h1>
+          <input
+            type="text"
+            name="name"
+            placeholder="姓名"
+            value={formData.name}
+            onChange={handleChange}
+            style={{ height: '30px' }}
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="電子郵件"
+            value={formData.email}
+            onChange={handleChange}
+            style={{ height: '30px' }}
+          />
+          <input
+            type="text"
+            name="phone"
+            placeholder="手機號碼"
+            value={formData.phone}
+            onChange={handleChange}
+            style={{ height: '30px' }}
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="密碼"
+            value={formData.password}
+            onChange={handleChange}
+            style={{ height: '30px' }}
+          />
+          <input
+            type="date"
+            name="birthday"
+            value={formData.birthday}
+            onChange={handleChange}
+            style={{ height: '30px' }}
+          />
+          <input
+            type="text"
+            name="marketName"
+            placeholder="賣場名稱"
+            value={formData.marketName}
+            onChange={handleChange}
+            style={{ height: '30px' }}
+          />
+          <input
+            type="text"
+            name="marketAddress"
+            placeholder="賣場地址"
+            value={formData.marketAddress}
+            onChange={handleChange}
+            style={{ height: '30px' }}
+          />
+          <button
+            onClick={handleRegister}
+            style={{ height: '30px', marginTop: '15px', marginBottom: '15px' }}
+          >
+            註冊
+          </button>
+        </div>
       </div>
     </div>
   );
