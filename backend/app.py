@@ -353,7 +353,7 @@ def get_reported_products():
         FROM product p
         JOIN users u ON p.sellerid = u.userid
         JOIN buyer_behavior bb ON p.productid = bb.productid
-        WHERE bb.behavior = 'Report' AND u.state = 'Avaliable'
+        WHERE bb.behavior = 'Report' AND u.state = 'Available'
     """
     result = execute_query(query)
     return jsonify(result)
@@ -392,7 +392,7 @@ def register_user():
     phone = data['phone']
     password = data['password']
     birthday = data.get('birthday')  # 非必填
-    state = 'Avaliable'
+    state = 'Available'
     mname = data.get('mname')  # 非必填
     maddress = data.get('maddress') # 非必填
 
@@ -537,7 +537,7 @@ def add_order():
         order_id = generate_id()  # 生成唯一訂單ID
         print(order_id, user_id, seller_id, amount, method, couponid)
         # 插入到 `orders` 表
-        if(couponid):
+        if(couponid != None):
             query_order = """
                 INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state, couponid)
                 VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting', %s)
@@ -546,7 +546,7 @@ def add_order():
         else:
             query_order = """
                 INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
-                VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting', %s)
+                VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting')
             """
             execute_query(query_order, (order_id, user_id, seller_id, amount, method), fetch=False)
 
@@ -566,11 +566,19 @@ def add_order():
             """
             execute_query(query_order_product, (order_id, product_id, quantity), fetch=False)
 
+            # 確認商品庫存是否足夠
+            query_check_storage = "SELECT storage FROM product WHERE productid = %s"
+            storage_result = execute_query(query_check_storage, (product_id,))
+            if storage_result["status"] == "error":
+                return jsonify(storage_result), 500
             # 更新 `product` 庫存
             query_update_product = """
                 UPDATE product SET storage = storage - %s WHERE productid = %s
             """
             execute_query(query_update_product, (quantity, product_id), fetch=False)
+            # 清空購物車
+            query_clear_cart = "DELETE FROM cart WHERE userid = %s and productid = %s"
+            execute_query(query_clear_cart, (user_id, product_id), fetch=False)
 
         # 插入到 `delivery` 表
         delivery_fee = calculate_delivery_fee(delivery_method)  # 計算配送費用
@@ -584,10 +592,6 @@ def add_order():
         execute_query(query_delivery, (
             order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, start_station_add, address
         ), fetch=False)
-
-        # 清空購物車
-        query_clear_cart = "DELETE FROM cart WHERE userid = %s"
-        execute_query(query_clear_cart, (user_id,), fetch=False)
 
         # 減去優惠券數量
         if(couponid):
@@ -745,7 +749,7 @@ def unblock_user():
     if not user_id:
         return jsonify({"status": "error", "message": "Missing userid"}), 400
 
-    query = "UPDATE users SET state = 'Avaliable' WHERE userid = %s"
+    query = "UPDATE users SET state = 'Available' WHERE userid = %s"
     result = execute_query(query, (user_id,), fetch=False)
     return jsonify(result)
 

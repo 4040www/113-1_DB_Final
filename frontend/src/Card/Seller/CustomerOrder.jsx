@@ -24,7 +24,7 @@ export default function CustomerOrder({ order_data, fetchOrderData }) {
           });
           if (!response.ok) throw new Error('Failed to refund order');
     
-          alert('Sending order refund request...');
+          alert('Sending order state change request...');
           fetchOrderData();
         } catch (err) {
           console.error('Error refunding order:', err);
@@ -71,7 +71,7 @@ export default function CustomerOrder({ order_data, fetchOrderData }) {
                                         onClick={() => handleChangeOrderState(order.orderid, 'Canceled')}
                                     >Cancel</button>
                                 )}
-                                {order.state === 'CheckCancel' && (
+                                {order.state === 'CancelWaiting' && (
                                     <button
                                         onClick={() => handleChangeOrderState(order.orderid, 'Finished')}
                                     >Finish</button>

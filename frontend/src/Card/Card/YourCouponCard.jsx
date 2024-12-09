@@ -1,4 +1,4 @@
-export default function YourCouponCard({ coupon_data, setCoupon }) {
+export default function YourCouponCard({ coupon_data, setCoupon, fetchCouponData }) {
 
     const deleteHandler = async (couponid) => {
         try {
@@ -11,6 +11,7 @@ export default function YourCouponCard({ coupon_data, setCoupon }) {
                 console.log('Coupon deleted:', couponid);
                 alert('Coupon deleted successfully!');
                 setCoupon(coupon_data.filter((item) => item.id !== couponid));
+                fetchCouponData();
             } else {
                 throw new Error(data.message || 'Failed to delete coupon');
             }

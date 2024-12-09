@@ -278,6 +278,7 @@ export default function YourMarket() {
                   <option value="S">S</option>
                   <option value="M">M</option>
                   <option value="L">L</option>
+                  <option value="F">F</option>
                 </select>
               </label>
               <br />
@@ -338,7 +339,7 @@ export default function YourMarket() {
       )}
       <div className="" style={{marginTop:'40px'}}>
         <h2>你的優惠券</h2>
-        <YourCouponCard coupon_data={coupon_data} setCoupon={setCoupon} />
+        <YourCouponCard coupon_data={coupon_data} setCoupon={setCoupon} fetchCouponData={fetchCouponData}/>
       </div>
 
       <div className="YourMarketNav">

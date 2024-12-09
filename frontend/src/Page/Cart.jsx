@@ -4,7 +4,7 @@ export default function Cart() {
     const [cartData, setCartData] = useState([]);
     const [newQuantity, setNewQuantity] = useState({}); // Used to store new quantities of products
     const [addresses, setAddresses] = useState(""); // Used to store addresses per seller
-    const [payMethod, setpayMethod] = useState('"Credit-Card"'); // New state to track selected sellers for order
+    const [payMethod, setpayMethod] = useState("CreditCard"); // New state to track selected sellers for order
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availableCoupons, setAvailableCoupons] = useState({});
     const [selectedCoupons, setSelectedCoupons] = useState({});
@@ -198,18 +198,18 @@ export default function Cart() {
                 setIsSubmitting(false);
                 return;
             }
-    
+
             const userId = localStorage.getItem('role');
             const sellerData = cartData.find((seller) => seller.sellerId === sellerId);
             const couponId = selectedCoupons[sellerId] || null;
             console.log(couponId, selectedCoupons[sellerId]);
-            const discount = (couponContent[sellerId] > 1
+            const discount = (couponContent[sellerId] ? (couponContent[sellerId] > 1
                 ? sellerData.totalPrice - couponContent[sellerId]
                 : (couponContent[sellerId] > 0
                     ? sellerData.totalPrice * couponContent[sellerId]
                     : couponContent[sellerId])
-            );
-            
+            ) : sellerData.totalPrice);
+
             const orderData = [
                 {
                     sellerId: sellerData.sellerId,
@@ -234,12 +234,12 @@ export default function Cart() {
                     startstationadd: '台灣大學',
                     endstationadd: addresses,
                     method: payMethod,
-                    couponid:couponId,
+                    couponid: couponId,
                 }),
             });
-    
+
             const data = await response.json();
-    
+
             if (data.status === 'success') {
                 alert('Order placed successfully');
                 fetchCartData();
@@ -253,7 +253,7 @@ export default function Cart() {
             setIsSubmitting(false);
         }
     };
-    
+
 
     if (cartData.length === 0) {
         return <p>Your cart is empty!</p>; // Display when the cart is empty
@@ -276,7 +276,7 @@ export default function Cart() {
                 onChange={(e) => setpayMethod(e.target.value)}
                 style={{ width: '150px', height: '36px', marginBottom: '20px' }}
             >
-                <option value="Credit-Card">信用卡</option>
+                <option value="CreditCard">信用卡</option>
                 <option value="LinePay">LinePay</option>
                 <option value="Cash">現金</option>
             </select>

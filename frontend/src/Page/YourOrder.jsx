@@ -109,8 +109,8 @@ export default function YourOrder() {
                 />
                 <div className="YourOrderCard-content-button">
                   <button
-                    onClick={() => handleRefund(order.orderid, order.state == 'Confirm' ? 'Processing' : 'Confirm')}
-                  >{order.state == 'Confirm' ? 'Refund' : 'Cancel Refund'}</button>
+                    onClick={() => handleRefund(order.orderid, order.state === 'Confirmed' ? 'CancelWaiting' : 'Confirmed')}
+                  >{order.state === 'Confirmed' || 'Processing' ? 'Request Refund' : ""}</button>
                   <button onClick={() => handleReview(order.orderid)}>Review</button>
                 </div>
               </div>
