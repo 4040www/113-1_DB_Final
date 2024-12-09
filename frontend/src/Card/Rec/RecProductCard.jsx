@@ -18,14 +18,26 @@ export default function RecProductCard({ products }) {
         }
     };
 
+    const truncate = (text, maxLength) => {
+        if (text.length > maxLength) {
+            return text.substring(0, maxLength) + '...';
+        }
+        return text;
+    };
+
+
     return (
         <div className='RecCard'>
             {products.map((product, index) => (
-                <div className="RecCard-content" key={index}>
-                    <h3>{product.pname}</h3>
+                <div className="RecCard-content" key={index} style={{ display: 'flex', justifyContent: 'space-between', }}>
+                    <h3 title={product.pname} style={{ cursor: 'pointer' }} >{truncate(product.pname,20)}</h3>
                     <div>{product.store}</div>
-                    <div>{product.price} / {product.color} / {product.size}</div>
-                    <button onClick={() => handleAddToCart(product.productid)}>
+                    <div>PRICE : ${product.price} </div>
+                    <div>COLOR : {product.color}</div>
+                    <div>SIZE : {product.size}</div>
+                    <button onClick={() => handleAddToCart(product.productid)}
+                        style={{ padding: '5px 10px', width:'180px', marginTop:'30px', alignSelf:'center', fontWeight:'bold', }}
+                        >
                         Add to Cart
                     </button>
                 </div>

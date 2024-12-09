@@ -336,14 +336,8 @@ export default function YourMarket() {
           </div>
         </div>
       )}
-      <h2>賣場名稱：{market_data.mname}</h2>
-      <input type="text" name="marketName" required />
-      <button onClick={()=>handleChangeMarketName()}>更改</button>
-      <h2>賣場地址：{market_data.maddress}</h2>
-      <input type="text" name="marketAddress" required />
-      <button onClick={()=>handelChangeMarketAddress() }>更改</button>
-      <div className="">
-        <h2>Your Coupon List</h2>
+      <div className="" style={{marginTop:'40px'}}>
+        <h2>你的優惠券</h2>
         <YourCouponCard coupon_data={coupon_data} setCoupon={setCoupon} />
       </div>
 
@@ -355,8 +349,16 @@ export default function YourMarket() {
           <h2>Add New Coupon...</h2>
         </button>
       </div>
-
-      <div style={{ height: '6px', backgroundColor: '#192e63', marginBottom: '35px' }} />
+      <h2>賣場名稱：</h2>
+      <p>{market_data.mname}</p>
+      <input type="text" name="marketName" required placeholder={market_data.mname} style={{height:'30px', width:'300px', borderRadius:'10px', paddingLeft:'10px' }}/>
+      <button onClick={()=>handleChangeMarketName()} style={{height:'36px', borderRadius:'10px',width:'80px', marginLeft:'20px'}}>更改</button>
+      <h2>賣場地址：</h2>
+      <p>{market_data.maddress}</p>
+      <input type="text" name="marketAddress" required placeholder={market_data.maddress} style={{height:'30px', width:'300px', borderRadius:'10px', paddingLeft:'10px' }}/>
+      <button onClick={()=>handelChangeMarketAddress()} style={{height:'36px', borderRadius:'10px',width:'80px', marginLeft:'20px'}}>更改</button>
+      
+      <div style={{ height: '6px', backgroundColor: '#192e63', marginBottom: '35px', marginTop:'35px' }} />
 
       <div className="YourMarketCard">
         <YourProductCard product_data={product_data} fetchProductData={fetchProductData} setProduct={setProduct} />

@@ -45,14 +45,14 @@ export default function MarketPage() {
     if (error) return <div>Error: {error}</div>;
 
     // random 6 products
-    const randomProducts = products.sort(() => Math.random() - 0.5).slice(0, 6);
+    const randomProducts = products.sort(() => Math.random() - 0.5).slice(0, 5);
 
     return (
         <div>
             <div className="RecComponent">
-                <h2>Recommend Product</h2>
+                <h2 style={{marginBottom:'30px', marginTop:'30px'}}>今日推薦商品</h2>
                 <RecProductCard products={randomProducts} />
-                <h2>Recommend Coupon</h2>
+                <h2 style={{marginBottom:'30px', marginTop:'40px'}}>推薦優惠券</h2>
                 <RecCouponCard coupons={coupons} setSearchContent={setSearchContent} />
             </div>
             <div style={{ height: '6px', backgroundColor: '#192e63', marginTop: '50px', marginBottom: '35px' }} />

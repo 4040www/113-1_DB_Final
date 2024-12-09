@@ -353,7 +353,7 @@ def get_reported_products():
         FROM product p
         JOIN users u ON p.sellerid = u.userid
         JOIN buyer_behavior bb ON p.productid = bb.productid
-        WHERE bb.behavior = 'Report' AND u.state = 'Enable'
+        WHERE bb.behavior = 'Report' AND u.state = 'Avaliable'
     """
     result = execute_query(query)
     return jsonify(result)
@@ -392,7 +392,7 @@ def register_user():
     phone = data['phone']
     password = data['password']
     birthday = data.get('birthday')  # 非必填
-    state = 'Enable'
+    state = 'Avaliable'
     mname = data.get('mname')  # 非必填
     maddress = data.get('maddress') # 非必填
 
@@ -517,76 +517,86 @@ def add_order():
     user_id = request.json.get('userId')
     cart_data = request.json.get('orderData')
     method = request.json.get('method')
+    delivery_method = request.json.get('deliveryMethod', 'Standard-Shipping')
+    start_station_add = request.json.get('startstationadd', 'Default Start Station')
+    address = request.json.get('endstationadd')
+    couponid = request.json.get('couponid')
 
     if not user_id or not cart_data:
-        return jsonify({"status": "error", "message": "缺少必要的参数"}), 400
-    
-    total_order_price = 0  # 用于累加整个订单的总价格
+        return jsonify({"status": "error", "message": "缺少必要的參數"}), 400
+    if not start_station_add or not address:
+        return jsonify({"status": "error", "message": "缺少必要的配送信息"}), 400
+
+
     for seller in cart_data:
         seller_id = seller.get('sellerId')
-        seller_total = 0
+        amount = seller.get('amount')
+        if not seller_id or not seller.get('products'):
+            return jsonify({"status": "error", "message": "無效的賣家或商品數據"}), 400
 
-        # 为每个卖家生成一个唯一的订单 ID
-        order_id = generate_id()
+        order_id = generate_id()  # 生成唯一訂單ID
+        print(order_id, user_id, seller_id, amount, method, couponid)
+        # 插入到 `orders` 表
+        if(couponid):
+            query_order = """
+                INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state, couponid)
+                VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting', %s)
+            """
+            execute_query(query_order, (order_id, user_id, seller_id, amount, method, couponid), fetch=False)
+        else:
+            query_order = """
+                INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
+                VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting', %s)
+            """
+            execute_query(query_order, (order_id, user_id, seller_id, amount, method), fetch=False)
 
-        # 第 1 步：为每个卖家插入数据到 `orders` 表
-        query_order = """
-            INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
-            VALUES (%s, NOW(), %s, %s, %s, %s, 'Confirm')
-        """
-        execute_query(query_order, (order_id, user_id, seller_id, 0, 'Credit-Card'), fetch=False)  # 先插入订单，金额设为0
-        
-        # 然后将所有商品数据插入 `order_product` 表
+        # 處理每個商品
         for product in seller.get('products', []):
             product_id = product.get('productId')
             quantity = product.get('quantity')
-            price = product.get('price')  # 获取产品价格
+            price = product.get('price')
 
-            seller_total += price * quantity
-            total_order_price += price * quantity
+            if not product_id or quantity <= 0 or price < 0:
+                return jsonify({"status": "error", "message": "商品數據無效"}), 400
 
-            # 第 2 步：插入数据到 `order_product` 表
+            # 插入到 `order_product` 表
             query_order_product = """
                 INSERT INTO order_product (orderid, productid, quantity)
                 VALUES (%s, %s, %s)
             """
             execute_query(query_order_product, (order_id, product_id, quantity), fetch=False)
-            
-            # updata product storage
+
+            # 更新 `product` 庫存
             query_update_product = """
                 UPDATE product SET storage = storage - %s WHERE productid = %s
-                VALUES (%s, %s)
-            """ 
+            """
             execute_query(query_update_product, (quantity, product_id), fetch=False)
 
-        # 第 3 步：更新订单金额
-        query_update_order = """
-            UPDATE orders
-            SET amount = %s
-            WHERE orderid = %s AND sellerid = %s
-        """
-        execute_query(query_update_order, (seller_total, order_id, seller_id), fetch=False)
-
-        # 现在我们确认订单已经插入了 orders 表，再插入 delivery 表
-        delivery_method = request.json.get('deliveryMethod', 'Standard-Shipping')
-        start_station_add = request.json.get('startstationadd', 'Default Start Station')  # 确保有有效值
-        address = request.json.get('endstationadd')
-        
-        if not start_station_add or not address:
-            return jsonify({"status": "error", "message": "缺少必要的配送信息"}), 400
-        
-        delivery_fee = calculate_delivery_fee(delivery_method)  # 假设这里计算运费
+        # 插入到 `delivery` 表
+        delivery_fee = calculate_delivery_fee(delivery_method)  # 計算配送費用
         delivery_start_date = time.strftime('%Y-%m-%d')
-        delivery_end_date = time.strftime('%Y-%m-%d')  # 可根据运输方式进行修改
+        delivery_end_date = time.strftime('%Y-%m-%d')  # 根據實際邏輯設計交貨日期
 
         query_delivery = """
             INSERT INTO delivery (orderid, dmethod, fee, start_date, end_date, start_station_add, end_station_add, state)
             VALUES (%s, %s, %s, %s, %s, %s, %s, 'Shipping')
         """
-        execute_query(query_delivery, (order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, start_station_add, address), fetch=False)
+        execute_query(query_delivery, (
+            order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, start_station_add, address
+        ), fetch=False)
 
-    # 返回成功的响应
-    return jsonify({"status": "success", "message": "订单成功添加"}), 200
+        # 清空購物車
+        query_clear_cart = "DELETE FROM cart WHERE userid = %s"
+        execute_query(query_clear_cart, (user_id,), fetch=False)
+
+        # 減去優惠券數量
+        if(couponid):
+            query_coupon = "UPDATE market_coupon SET quantity = quantity - 1 WHERE userid = %s AND couponid = %s"
+            execute_query(query_coupon, (user_id, couponid), fetch=False)
+            
+
+    # 返回成功響應
+    return jsonify({"status": "success", "message": "訂單成功添加"}), 200
 
 def generate_id():
     id = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
@@ -735,7 +745,7 @@ def unblock_user():
     if not user_id:
         return jsonify({"status": "error", "message": "Missing userid"}), 400
 
-    query = "UPDATE users SET state = 'Enable' WHERE userid = %s"
+    query = "UPDATE users SET state = 'Avaliable' WHERE userid = %s"
     result = execute_query(query, (user_id,), fetch=False)
     return jsonify(result)
 

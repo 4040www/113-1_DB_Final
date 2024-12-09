@@ -32,7 +32,7 @@
     flex-direction: column;
     justify-content: space-between;
     width: 320px;
-    height: 270px;
+    height: 290px;
     padding: 1rem;
     border:black 1px solid;
     background-color: #fff;
@@ -43,6 +43,7 @@
     width:100%;
     display: flex;
     justify-content: space-between;
+    gap: 10px;
 }
 
 .ProductCard-content-button button{

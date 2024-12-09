@@ -74,7 +74,7 @@ export default function ProductCard({ products, searchContent }) {
             else if (behavior === 'Report') {
                 alert('Product reported');
             }
-            else{
+            else {
                 alert('Product liked');
             }
         } catch (err) {
@@ -89,7 +89,7 @@ export default function ProductCard({ products, searchContent }) {
                 <h2>Find Product</h2>
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                     <select
-                        style={{ borderRadius: '20px' }}
+                        style={{ borderRadius: '20px', height: '40px' }}
                         value={searchOption}
                         onChange={(e) => setSearchOption(e.target.value)}
                     >
@@ -110,7 +110,7 @@ export default function ProductCard({ products, searchContent }) {
                             type="text"
                             placeholder="Search..."
                         />
-                        <button type="submit">Search</button>
+                        <button type="submit" style={{ borderRadius: '20px', height: '40px', width: '100px', marginRight: '20px' }}>Search</button>
                     </form>
                 </div>
             </div>
@@ -123,18 +123,21 @@ export default function ProductCard({ products, searchContent }) {
                                 <h3>{product.pname}</h3>
                                 <div>{product.market_name}</div>
                                 <div>${product.price} / {product.color} / {product.size}</div>
-                                <div className="ProductCard-content-button">
-                                    <button onClick={() => handleAddToCart(product.productid)}>
+                                <div>
+                                    <div className="ProductCard-content-button">
+
+                                        <button onClick={() => handleUserBehavior(product.productid, 'Favorite')}>
+                                            Like
+                                        </button>
+                                        <button onClick={() => handleUserBehavior(product.productid, 'Not-Interested')}>
+                                            See less
+                                        </button>
+                                        <button onClick={() => handleUserBehavior(product.productid, 'Report')}>
+                                            Report
+                                        </button>
+                                    </div>
+                                    <button onClick={() => handleAddToCart(product.productid)} style={{width:'100%', marginTop:'10px', backgroundColor:'#dfebef', borderWidth:'1px', height:'30px'}}>
                                         Add to Cart
-                                    </button>
-                                    <button onClick={() => handleUserBehavior(product.productid, 'Favorite')}>
-                                        Like
-                                    </button>
-                                    <button onClick={() => handleUserBehavior(product.productid, 'Not-Interested')}>
-                                        See less
-                                    </button>
-                                    <button onClick={() => handleUserBehavior(product.productid, 'Report')}>
-                                        Report
                                     </button>
                                 </div>
                             </div>

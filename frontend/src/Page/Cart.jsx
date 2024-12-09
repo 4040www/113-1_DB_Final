@@ -4,7 +4,7 @@ export default function Cart() {
     const [cartData, setCartData] = useState([]);
     const [newQuantity, setNewQuantity] = useState({}); // Used to store new quantities of products
     const [addresses, setAddresses] = useState(""); // Used to store addresses per seller
-    const [payMethod, setpayMethod] = useState({}); // New state to track selected sellers for order
+    const [payMethod, setpayMethod] = useState('"Credit-Card"'); // New state to track selected sellers for order
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availableCoupons, setAvailableCoupons] = useState({});
     const [selectedCoupons, setSelectedCoupons] = useState({});
@@ -83,7 +83,6 @@ export default function Cart() {
         }
         const couponContent = availableCoupons[sellerId].find((coupon) => coupon.couponid === couponId);
         if (!couponContent) return;
-        console.log(couponContent.content);
         if (couponContent.content.includes('OFF')) {
             const discount = parseFloat(couponContent.content.split('%')[0]);
             setCouponContent((prev) => ({
@@ -199,139 +198,141 @@ export default function Cart() {
                 setIsSubmitting(false);
                 return;
             }
-
+    
             const userId = localStorage.getItem('role');
             const sellerData = cartData.find((seller) => seller.sellerId === sellerId);
             const couponId = selectedCoupons[sellerId] || null;
-            const discount = couponContent[sellerId] || 0;
-            if (discount > 1) {
-                discount = sellerData.totalPrice- discount;
-            }
-            else if (discount > 0) {
-                discount = sellerData.totalPrice * discount;
-            }
-
-
-            const orderData = {
+            console.log(couponId, selectedCoupons[sellerId]);
+            const discount = (couponContent[sellerId] > 1
+                ? sellerData.totalPrice - couponContent[sellerId]
+                : (couponContent[sellerId] > 0
+                    ? sellerData.totalPrice * couponContent[sellerId]
+                    : couponContent[sellerId])
+            );
+            
+            const orderData = [
+                {
                     sellerId: sellerData.sellerId,
                     products: sellerData.products.map((product) => ({
                         productId: product.productId,
                         quantity: product.amount,
                         price: product.price,
                     })),
-                    couponId,
                     amount: discount,
-                };
-
-                const response = await fetch(`http://localhost:${window.globalPort}/add_order`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        userId,
-                        orderData,
-                        startstationadd: '台灣大學',
-                        endstationadd: addresses,
-                        method: payMethod,
-                    }),
-                });
-
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    alert('Order placed successfully');
-                    sellerData.products.forEach(async (product) => {
-                        await deleteCartItem(product.productId);
-                    });
-                    setIsSubmitting(false);
-                } else {
-                    console.error(data.message);
-                    setIsSubmitting(false);
                 }
-            } catch (err) {
-                console.error(err);
+            ];
+            console.log(orderData);
+            console.log(payMethod);
+            const response = await fetch(`http://localhost:${window.globalPort}/add_order`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId,
+                    orderData,
+                    startstationadd: '台灣大學',
+                    endstationadd: addresses,
+                    method: payMethod,
+                    couponid:couponId,
+                }),
+            });
+    
+            const data = await response.json();
+    
+            if (data.status === 'success') {
+                alert('Order placed successfully');
+                fetchCartData();
+            } else {
+                alert(`Order failed: ${data.message}`);
             }
-        };
-
-        if (cartData.length === 0) {
-            return <p>Your cart is empty!</p>; // Display when the cart is empty
+        } catch (error) {
+            console.error('Error placing order:', error);
+            alert('Failed to place order');
+        } finally {
+            setIsSubmitting(false);
         }
+    };
+    
 
-        return (
-            <div>
-                <h1>購物車</h1>
-                <h3>輸入你的地址：</h3>
-                <input
-                    type="text"
-                    placeholder="Enter address"
-                    value={addresses}
-                    onChange={(e) => setAddresses(e.target.value)}
-                    style={{ width: '300px', height: '30px', marginBottom: '20px' }}
-                />
-                <h3>選擇付款方式：</h3>
-                <select
-                    value={payMethod}
-                    onChange={(e) => setpayMethod(e.target.value)}
-                    style={{ width: '150px', height: '36px', marginBottom: '20px' }}
-                >
-                    <option value="Credit-Card">信用卡</option>
-                    <option value="LinePay">LinePay</option>
-                    <option value="Cash">現金</option>
-                </select>
-                {cartData.map((seller, sellerIndex) => (
-                    <div key={sellerIndex} className="CartCard">
-                        <div className="CartCard-content">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                <p style={{ fontWeight: 'bolder', fontSize: '20px' }}>
-                                    {seller.sellerName} - ${seller.totalPrice.toFixed(2)} {couponContent[seller.sellerId] ? couponContent[seller.sellerId] < 1 ? `*${couponContent[seller.sellerId] * 100}%` : `- ${couponContent[seller.sellerId]}` : ""}
-                                </p>
-                                <div className="CartCard-content-button">
-                                    <button onClick={() => placeOrder(seller.sellerId)} disabled={isSubmitting}>Place Order</button>
-                                </div>
-                            </div>
-                            <select
-                                value={selectedCoupons[seller.sellerId] || ''}
-                                onChange={(e) => handleCouponSelection(seller.sellerId, e.target.value)}
-                            >
-                                <option value="noValue">No Coupon</option>
-                                {(availableCoupons[seller.sellerId] || []).map((coupon) => (
-                                    <option key={coupon.couponid} value={coupon.couponid}>
-                                        {coupon.content}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="CartCardOrder">
-                                {seller.products.map((product, productIndex) => (
-                                    <div key={productIndex} className="CartCardOrder-content">
-                                        <div>
-                                            <p
-                                                title={product.name}
-                                                style={{ cursor: 'pointer' }}
-                                            >
-                                                {truncate(product.name, 20)}
-                                            </p>
-                                            <p>${product.price.toFixed(2)}</p>
-                                            <span>Amount:</span>
-                                            <input
-                                                type="number"
-                                                value={newQuantity[product.productId] || product.amount}
-                                                onChange={(e) => handleQuantityChange(product.productId, e.target.value)}
-                                                style={{ width: '50px' }}
-                                            />
-                                        </div>
-                                        <button onClick={() => deleteCartItem(product.productId)}>
-                                            Remove
-                                        </button>
-                                        <button onClick={() => handleChangeAmount(product.productId)}>
-                                            Change Amount
-                                        </button>
-                                    </div>
-                                ))}
+    if (cartData.length === 0) {
+        return <p>Your cart is empty!</p>; // Display when the cart is empty
+    }
+
+    return (
+        <div>
+            <h1>購物車</h1>
+            <h3>輸入你的地址：</h3>
+            <input
+                type="text"
+                placeholder="Enter address"
+                value={addresses}
+                onChange={(e) => setAddresses(e.target.value)}
+                style={{ width: '300px', height: '30px', marginBottom: '20px' }}
+            />
+            <h3>選擇付款方式：</h3>
+            <select
+                value={payMethod}
+                onChange={(e) => setpayMethod(e.target.value)}
+                style={{ width: '150px', height: '36px', marginBottom: '20px' }}
+            >
+                <option value="Credit-Card">信用卡</option>
+                <option value="LinePay">LinePay</option>
+                <option value="Cash">現金</option>
+            </select>
+            {cartData.map((seller, sellerIndex) => (
+                <div key={sellerIndex} className="CartCard">
+                    <div className="CartCard-content">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                            <p style={{ fontWeight: 'bolder', fontSize: '20px' }}>
+                                {seller.sellerName} - ${seller.totalPrice.toFixed(2)} {couponContent[seller.sellerId] ? couponContent[seller.sellerId] < 1 ? `*${couponContent[seller.sellerId] * 100}%` : `- ${couponContent[seller.sellerId]}` : ""}
+                            </p>
+                            <div className="CartCard-content-button">
+                                <button onClick={() => placeOrder(seller.sellerId)} disabled={isSubmitting}>Place Order</button>
                             </div>
                         </div>
+                        <select
+                            value={selectedCoupons[seller.sellerId] || ''}
+                            onChange={(e) => handleCouponSelection(seller.sellerId, e.target.value)}
+                        >
+                            <option value="noValue">No Coupon</option>
+                            {(availableCoupons[seller.sellerId] || []).map((coupon) => (
+                                <option key={coupon.couponid} value={coupon.couponid}>
+                                    {coupon.content}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="CartCardOrder">
+                            {seller.products.map((product, productIndex) => (
+                                <div key={productIndex} className="CartCardOrder-content">
+                                    <div>
+                                        <p
+                                            title={product.name}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {truncate(product.name, 20)}
+                                        </p>
+                                        <p>${product.price.toFixed(2)}</p>
+                                        <span>Amount:</span>
+                                        <input
+                                            type="number"
+                                            value={newQuantity[product.productId] || product.amount}
+                                            onChange={(e) => handleQuantityChange(product.productId, e.target.value)}
+                                            style={{ width: '50px' }}
+                                        />
+                                    </div>
+                                    <button onClick={() => deleteCartItem(product.productId)}>
+                                        Remove
+                                    </button>
+                                    <button onClick={() => handleChangeAmount(product.productId)}>
+                                        Change Amount
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                ))}
-            </div>
-        );
-    }
+                </div>
+            ))}
+        </div>
+    );
+}
