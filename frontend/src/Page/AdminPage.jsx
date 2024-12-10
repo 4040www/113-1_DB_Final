@@ -10,6 +10,7 @@ function AdminPage() {
   const [userInput, setUserInput] = useState("");
   const [userOrder, setUserOrder] = useState("");
   const [userInfo, setUserInfo] = useState("");
+  const [userProduct, setUserProduct] = useState("");
 
   const baseUrl = `http://localhost:${window.globalPort}`;
 
@@ -116,6 +117,11 @@ function AdminPage() {
     const data2 = await response2.json();
     console.log(data2);
     setUserInfo(data2.data);
+
+    const response3 = await fetch(`${baseUrl}/get_product_mine?userid=${userInput}`);
+    const data3 = await response3.json();
+    console.log(data3);
+    setUserProduct(data3.data);
   }
 
   return (
@@ -212,7 +218,7 @@ function AdminPage() {
             </ul>
           </div>
         ) : (
-          <p>目前沒有使用者資訊。</p>
+          <p></p>
         )}
       </div>
       {userOrder.length > 0 ? (
@@ -242,6 +248,28 @@ function AdminPage() {
           </ul>
         </div>
       ) : (<div></div>)}
+      {
+        <div>
+          {userProduct.length > 0 ? (
+            <div>
+              <ul>
+                {userProduct.map((product) => (
+                  <li key={product.productid}>
+                    <strong>{product.pname}</strong>
+                    <p>Price:${product.price}</p>
+                    <p>Stock:{product.storage}</p>
+                    <p>State:{product.state}</p>
+                    <p>Size:{product.size}</p>
+                    <p>Color:{product.color}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p></p>
+          )}
+        </div>
+      }
 
       <h2>被檢舉商品</h2>
       {reportedProducts.length > 0 ? (
