@@ -316,13 +316,13 @@
    ```
    如須測試，請使用連結的程式碼插入資料：[資料雲端](https://drive.google.com/drive/folders/1mN0sNwxAxP-5f2TIeePWi7wxW3nCJfKj?usp=sharing)
 
-4. **設定資料庫密碼**  
+5. **設定資料庫密碼**  
    將資料庫密碼儲存在 `db_password.txt` 文件中，讓後端程式可以自動讀取。例如：
    ```plaintext
    password
    ```
 
-5. **測試資料庫連線**  
+6. **測試資料庫連線**  
    使用本地的 PostgreSQL 客戶端工具（如 pgAdmin 或 TablePlus）進行連線測試，確認資料庫可以正常使用。
 
 
@@ -341,7 +341,7 @@
 ## 影片與文件
 
 - **GitHub 專案連結**：[GitHub Repository](https://github.com/yourusername/timmy-market)
-- **展示影片連結**：[影片展示](https://youtu.be/yourvideolink)
+- **展示影片連結**：[影片展示](https://youtu.be/zcsuNxNN8Mw?si=KR4fy5xa4pepJRx2)
 
 這些資源展示了專案的完整功能與操作流程，您可以進一步了解系統如何運作，並查看實際的操作界面與功能演示。
 
