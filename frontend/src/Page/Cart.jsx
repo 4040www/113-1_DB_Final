@@ -19,7 +19,7 @@ export default function Cart() {
             const data = await response.json();
             const groupedData = await data.data.reduce(async (accPromise, item) => {
                 const acc = await accPromise;
-                const { seller_name, sellerid, productid, product_name, price, quantity } = item;
+                const { seller_name, sellerid, productid, product_name, price, quantity, seller_address } = item;
 
                 if (!acc[seller_name]) {
                     acc[seller_name] = {
@@ -27,6 +27,7 @@ export default function Cart() {
                         sellerId: sellerid,
                         totalPrice: 0,
                         products: [],
+                        seller_address: seller_address,
                     };
                 }
 
@@ -209,6 +210,7 @@ export default function Cart() {
                     ? sellerData.totalPrice * couponContent[sellerId]
                     : couponContent[sellerId])
             ) : sellerData.totalPrice);
+            const seller_id = sellerData.sellerId;
 
             const orderData = [
                 {
@@ -235,6 +237,7 @@ export default function Cart() {
                     endstationadd: addresses,
                     method: payMethod,
                     couponid: couponId,
+                    seller_id: seller_id,
                 }),
             });
 

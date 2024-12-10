@@ -566,7 +566,8 @@ def add_order():
     start_station_add = request.json.get('startstationadd', 'Default Start Station')
     address = request.json.get('endstationadd')
     couponid = request.json.get('couponid')
-
+    seller_id = request.json.get('seller_id')
+    print(user_id, cart_data, method, delivery_method, start_station_add, address, couponid)
     if not user_id or not cart_data:
         return jsonify({"status": "error", "message": "缺少必要的參數"}), 400
     if not start_station_add or not address:
@@ -596,7 +597,7 @@ def add_order():
                 SELECT quantity FROM market_coupon 
                 WHERE userid = %s AND couponid = %s
             """
-            coupon_result = execute_query(query_check_coupon, (user_id, couponid))
+            coupon_result = execute_query(query_check_coupon, (seller_id, couponid))
             if coupon_result["status"] == "error" or not coupon_result["data"]:
                 return jsonify({"status": "error", "message": "優惠券不存在或查詢失敗"}), 400
 
@@ -621,6 +622,7 @@ def add_order():
                     VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting', %s)
                 """
                 execute_query(query_order, (order_id, user_id, seller_id, amount, method, couponid), fetch=False)
+                print("inserted")
             else:
                 query_order = """
                     INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
@@ -656,8 +658,8 @@ def add_order():
             delivery_end_date = time.strftime('%Y-%m-%d')  # 根據實際邏輯設計交貨日期
 
             query_delivery = """
-                INSERT INTO delivery (orderid, dmethod, fee, start_date, end_date, start_station_add, end_station_add, state)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'Shipping')
+                INSERT INTO delivery (orderid, dmethod, fee, start_date, end_date, start_station_add, end_station_add)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             execute_query(query_delivery, (
                 order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, start_station_add, address
