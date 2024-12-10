@@ -79,6 +79,16 @@ def get_user_login_info():
         return jsonify(result)
     return jsonify({"status": "error", "message": "Missing email parameter"}), 400
 
+# 使用者資料
+@app.route('/get_user_info', methods=['GET'])
+def get_user_info():
+    userid = request.args.get('userid')
+    if userid:
+        result = execute_query("SELECT * FROM users WHERE userid = %s", (userid,))
+        return jsonify(result)
+    return jsonify({"status": "error", "message": "Missing userid parameter"}), 400
+
+
 # 產品資料
 @app.route('/get_product', methods=['GET'])
 def get_product():
@@ -407,6 +417,7 @@ def get_restricted_users():
     """
     result = execute_query(query)
     return jsonify(result)
+
 
 # --- POST ----------------------
 

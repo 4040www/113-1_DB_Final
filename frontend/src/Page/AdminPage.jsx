@@ -7,6 +7,9 @@ function AdminPage() {
   const [status, setStatus] = useState("buyerid"); // 用於儲存 select 的值
   const [inputValue, setInputValue] = useState(""); // 用於儲存 input 的值
   const [changeState, setChangeState] = useState("Confirmed");
+  const [userInput, setUserInput] = useState("");
+  const [userOrder, setUserOrder] = useState("");
+  const [userInfo, setUserInfo] = useState("");
 
   const baseUrl = `http://localhost:${window.globalPort}`;
 
@@ -77,7 +80,7 @@ function AdminPage() {
     const data = await response.json();
     console.log(data);
     setOrderInfo(data.data);
-  } 
+  }
 
   // 搜尋訂單
   const handleSearch = () => {
@@ -96,12 +99,24 @@ function AdminPage() {
       if (!response.ok) throw new Error('Failed to refund order');
 
       alert('Sending order state change request...');
-      fetchOrderInfo( inputValue, status);
+      fetchOrderInfo(inputValue, status);
     } catch (err) {
       console.error('Error refunding order:', err);
       alert('Failed to refund order. Please try again.');
     }
   };
+
+  const handleSearchUserOrder = async () => {
+    const response = await fetch(`${baseUrl}/get_order_info?status=${userInput}&value=buyerId`);
+    const data = await response.json();
+    console.log(data);
+    setUserOrder(data.data);
+
+    const response2 = await fetch(`${baseUrl}/get_user_info?userid=${userInput}`);
+    const data2 = await response2.json();
+    console.log(data2);
+    setUserInfo(data2.data);
+  }
 
   return (
     <div>
@@ -139,28 +154,94 @@ function AdminPage() {
         </button>
       </div>
       <ul>
-          {orderInfo.map((order) => (
-            <li key={order.id}>
-              <strong>{order.orderid}</strong> - Buyer:{order.buyerid} - Seller:{order.sellerid}
-              <p>State:{order.state}</p>
-              <p>Price:${order.amount}</p>
-              <p>Date:{new Date(order.otime).toLocaleDateString()}</p>
-              <p>method:{order.method}</p>
-              <select
-                value={changeState}
-                onChange={(e) => setChangeState(e.target.value)}
-                style={{ height: '30px' }}
-              >
-                <option value="Confirmed">Confirmed</option>
-                <option value="Processing">Processing</option>
-                <option value="Finished">Finished</option>
-                <option value="CancelWaiting">CancelWaiting</option>
-                <option value="Canceled">Canceled</option>
-              </select>
-              <button onClick={() => handleChangeOrderState(order.orderid, changeState )} style={{ height: '30px', marginLeft:'10px' }}>更改訂單狀態</button>
-            </li>
-          ))}
-        </ul>
+        {orderInfo.map((order) => (
+          <li key={order.id}>
+            <strong>{order.orderid}</strong> - Buyer:{order.buyerid} - Seller:{order.sellerid}
+            <p>State:{order.state}</p>
+            <p>Price:${order.amount}</p>
+            <p>Date:{new Date(order.otime).toLocaleDateString()}</p>
+            <p>method:{order.method}</p>
+            <select
+              value={changeState}
+              onChange={(e) => setChangeState(e.target.value)}
+              style={{ height: '30px' }}
+            >
+              <option value="Confirmed">Confirmed</option>
+              <option value="Processing">Processing</option>
+              <option value="Finished">Finished</option>
+              <option value="CancelWaiting">CancelWaiting</option>
+              <option value="Canceled">Canceled</option>
+            </select>
+            <button onClick={() => handleChangeOrderState(order.orderid, changeState)} style={{ height: '30px', marginLeft: '10px' }}>更改訂單狀態</button>
+          </li>
+        ))}
+      </ul>
+
+      <h2>搜尋使用者的資訊以及所有訂單</h2>
+
+      {/* 輸入框 */}
+      <input
+        type="text"
+        placeholder="請輸入使用者ID"
+        style={{ height: '24px', marginRight: '10px' }}
+        value={userInput}
+        onChange={(e) => setUserInput(e.target.value)}
+      />
+
+      {/* 按鈕 */}
+      <button onClick={handleSearchUserOrder} style={{ height: '30px' }}>
+        搜尋
+      </button>
+      <div>
+        {userInfo.length > 0 ? (
+          <div>
+            <ul>
+              {userInfo.map((user) => (
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
+                  <h3>{user.name}</h3>
+                  <div>
+                  <p>ID:{user.userid}</p>
+                  <p>Name:{user.name} </p>
+                  <p>EMAIL:{user.email}</p>
+                  <p>PHONE:{user.phone}</p>
+                  <p>BIRTHDAY:{new Date(user.birthday).toLocaleDateString()}</p>
+                  <p>STATE:{user.state}</p>
+                  </div>
+                </div>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p>目前沒有使用者資訊。</p>
+        )}
+      </div>
+      {userOrder.length > 0 ? (
+        <div>
+          <ul>
+            {userOrder.map((order) => (
+              <li key={order.id}>
+                <strong>{order.orderid}</strong> - Buyer:{order.buyerid} - Seller:{order.sellerid}
+                <p>State:{order.state}</p>
+                <p>Price:${order.amount}</p>
+                <p>Date:{new Date(order.otime).toLocaleDateString()}</p>
+                <p>method:{order.method}</p>
+                <select
+                  value={changeState}
+                  onChange={(e) => setChangeState(e.target.value)}
+                  style={{ height: '30px' }}
+                >
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Finished">Finished</option>
+                  <option value="CancelWaiting">CancelWaiting</option>
+                  <option value="Canceled">Canceled</option>
+                </select>
+                <button onClick={() => handleChangeOrderState(order.orderid, changeState)} style={{ height: '30px', marginLeft: '10px' }}>更改訂單狀態</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (<div></div>)}
 
       <h2>被檢舉商品</h2>
       {reportedProducts.length > 0 ? (
