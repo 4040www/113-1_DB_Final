@@ -43,41 +43,60 @@
 
 ```
 113-1_DB_FINAL/
-├── public/                      # 靜態資源文件
-│   ├── favicon.ico              # 項目圖標
-│   ├── index.html               # 主 HTML 文件
-│   ├── manifest.json            # PWA 設置文件
-│   ├── robots.txt               # SEO 文件
-├── src/                         # 前端源碼文件
-│   ├── Card/                    # 卡片相關的元件
-│   │   ├── Card/                # 通用卡片元件
-│   │   │   ├── ProductCard.jsx  # 商品卡片元件
-│   │   │   ├── YourCouponCard.jsx # 優惠券卡片元件
-│   │   ├── Rec/                 # 推薦相關元件
-│   │   │   ├── RecCouponCard.jsx # 推薦優惠券元件
-│   │   │   ├── RecProductCard.jsx # 推薦商品元件
-│   │   ├── Seller/              # 賣家專用元件
-│   │       ├── CustomerOrder.jsx # 顯示顧客訂單
-│   │       ├── YourProductCard.jsx # 賣家商品卡片
-│   ├── Page/                    # 頁面元件
-│   │   ├── Cart.jsx             # 購物車頁面
-│   │   ├── MarketPage.jsx       # 市場頁面
-│   │   ├── YourOrder.jsx        # 顧客訂單頁面
-│   │   ├── YourMarket.jsx       # 賣家管理頁面
-│   │   ├── Page.css             # 頁面樣式
-│   ├── App.js                   # 主應用程式入口
-│   ├── App.css                  # 全局樣式
-│   ├── index.js                 # ReactDOM 渲染入口
-│   ├── index.css                # 主 CSS
-│   ├── reportWebVitals.js       # 性能測試
-│   ├── setupTests.js            # 測試設置
-├── backend/                     # 後端源碼文件
-│   ├── app.py                   # Flask 後端應用程式
-│   ├── db_password.txt          # PostgreSQL 密碼文件
-│   ├── requirements.txt         # Python 依賴項
-├── .gitignore                   # Git 忽略文件
-├── package.json                 # 前端項目依賴與腳本
-├── README.md                    # 項目說明文件
+│
+├── backend/
+│   ├── __pycache__/
+│   ├── venv/
+│   ├── app.py
+│   ├── db_password.txt
+│   ├── requirement.txt
+│
+├── frontend/
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   ├── index.html
+│   │   ├── manifest.json
+│   │   ├── robots.txt
+│   │
+│   ├── src/
+│   │   ├── Card/
+│   │   │   ├── ProductCard.jsx
+│   │   │   ├── YourCouponCard.jsx
+│   │   │   ├── Rec/
+│   │   │   │   ├── RecCouponCard.jsx
+│   │   │   │   ├── RecProductCard.jsx
+│   │   │   ├── Seller/
+│   │   │   │   ├── CustomerOrder.jsx
+│   │   │   │   ├── YourProductCard.jsx
+│   │   │   ├── Card.css
+│   │   │
+│   │   ├── components/
+│   │   │   ├── ProtectedRoute.jsx
+│   │   │
+│   │   ├── Page/
+│   │   │   ├── AdminPage.jsx
+│   │   │   ├── Cart.jsx
+│   │   │   ├── LikeProduct.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   ├── MarketPage.jsx
+│   │   │   ├── YourMarket.jsx
+│   │   │   ├── YourOrder.jsx
+│   │   │   ├── Page.css
+│   │   │
+│   │   ├── App.css
+│   │   ├── App.js
+│   │   ├── App.test.js
+│   │   ├── index.css
+│   │   ├── index.js
+│   │   ├── reportWebVitals.js
+│   │   ├── setupTests.js
+│   │
+│   ├── .gitignore
+│   ├── package-lock.json
+│   ├── package.json
+│
+├── README.md
+
 ```
 
 ## 如何執行
@@ -117,7 +136,180 @@
 2. **啟動前端開發服務**：
    ```bash
    npm start
+   ``以下是依照你的格式撰寫的資料庫說明，適用於 README：
+
+---
+
+### 資料庫設置與運行
+
+1. **安裝 PostgreSQL**  
+   確保本地已安裝 PostgreSQL，並啟動伺服器。
+
+2. **建立資料庫與使用者**  
+   打開 PostgreSQL Shell 或使用資料庫管理工具（如 pgAdmin），執行以下指令來建立資料庫和使用者：  
+   ```sql
+   CREATE DATABASE database_name;
+   CREATE USER username WITH PASSWORD 'password';
+   GRANT ALL PRIVILEGES ON DATABASE database_name TO username;
    ```
+
+3. **建立資料表**  
+   根據以下結構建立資料表：  
+   ```sql
+   CREATE Table users (
+	userid		varchar(10)	NOT NULL	PRIMARY KEY, 
+	name		varchar(20)	NOT NULL,
+	email		text		NOT NULL	UNIQUE,
+	phone		char(10)	NOT NULL	UNIQUE,
+	password	text		NOT NULL,
+	birthday	date,
+	state		varchar(10)	NOT NULL,
+	CHECK (state IN ('Available', 'Restricted', 'Admin'))
+);
+
+CREATE Table market (
+	userid		varchar(10)	NOT NULL	PRIMARY KEY,
+	mname		text		NOT NULL,
+	maddress	text		NOT NULL,
+	CONSTRAINT fk_market FOREIGN KEY (userid) REFERENCES users(userid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+);
+
+CREATE Table product (
+	productid	varchar(10)	NOT NULL	PRIMARY KEY,
+	pname		text		NOT NULL,
+	price		int			NOT NULL,
+	sellerid	varchar(10)	NOT NULL,
+	storage		int			NOT NULL,
+	period		int			NOT NULL,
+	state		varchar(10)	NOT NULL	DEFAULT 'Available',
+	size		char(1)		NOT NULL	DEFAULT 'F',
+	color		varchar(15)	NOT NULL,
+	CONSTRAINT fk_seller FOREIGN KEY (sellerid) REFERENCES market(userid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CHECK (state IN ('Available', 'Removed', 'Sold-out', 'Restricted')),
+	CHECK (size IN ('S', 'M', 'L', 'F'))
+);
+
+CREATE Table coupon (
+	couponid	varchar(10)	NOT NULL	PRIMARY KEY,
+	content		text		NOT NULL,
+	condition	text		NOT NULL,
+	start_date	date		NOT NULL,
+	end_date	date		NOT NULL,
+	CHECK (end_date >= start_date)
+);
+
+CREATE Table cart (
+	userid		varchar(10)	NOT NULL,
+	productid	varchar(10)	NOT NULL,
+	quantity	int			NOT NULL	DEFAULT 1,
+	PRIMARY KEY (userid, productid),
+	CONSTRAINT fk_cart_user FOREIGN KEY (userid) REFERENCES users(userid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CONSTRAINT fk_product FOREIGN KEY (productid) REFERENCES product(productid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+);
+
+CREATE Table orders (
+	orderid		varchar(10)	NOT NULL	PRIMARY KEY,
+	otime		timestamp	NOT NULL,
+	buyerid		varchar(10)	NOT NULL,
+	sellerid	varchar(10)	NOT NULL,
+	amount		int			NOT NULL,
+	method		varchar(20)	NOT NULL,
+	state		varchar(20)	NOT NULL,
+	review		text,
+	couponid	varchar(10),
+	CONSTRAINT fk_order_buyer FOREIGN KEY (buyerid) REFERENCES users(userid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CONSTRAINT fk_order_seller FOREIGN KEY (sellerid) REFERENCES market(userid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CONSTRAINT fk_order_coupon FOREIGN KEY (couponid) REFERENCES coupon(couponid)
+		ON DELETE SET NULL
+		ON UPDATE CASCADE,
+	CHECK (state IN ('Waiting', 'Confirmed', 'Processing', 'Finished', 'CancelWaiting', 'Canceled')),
+	CHECK (method IN ('Cash', 'LinePay', 'CreditCard'))
+);
+
+CREATE Table market_coupon (
+	userid		varchar(10)	NOT NULL,
+	couponid	varchar(10)	NOT NULL,
+	quantity	int			NOT NULL,
+	PRIMARY KEY(userid, couponid),
+	CONSTRAINT fk_market_coupon_user FOREIGN KEY (userid) REFERENCES market(userid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CONSTRAINT fk_market_coupon_couponid FOREIGN KEY (couponid) REFERENCES coupon(couponid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+);
+
+CREATE Table order_product (
+	orderid		varchar(10)	NOT NULL,
+	productid	varchar(10)	NOT NULL,
+	quantity	int			NOT NULL	DEFAULT 1,
+	PRIMARY KEY(orderid, productid),
+	CONSTRAINT fk_order FOREIGN KEY (orderid) REFERENCES orders(orderid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CONSTRAINT fk_order_product FOREIGN KEY (productid) REFERENCES product(productid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+);
+
+CREATE Table delivery (
+	 orderid			varchar(10)		NOT NULL	PRIMARY KEY,
+	 dmethod  			varchar(20) 	NOT NULL 	DEFAULT 	'Standard-Shipping',
+	 fee   				int   			NOT NULL,
+	 start_date 		date  			NOT NULL,
+	 end_date 			date  			NOT NULL,
+	 start_station_add 	text 			NOT NULL,
+	 end_station_add  	text 			NOT NULL,
+	 state  			varchar(20) 	NOT NULL,
+	 CONSTRAINT fk_delivery FOREIGN KEY (orderid) REFERENCES orders(orderid)
+	  	ON DELETE CASCADE
+	  	ON UPDATE CASCADE,
+	 CONSTRAINT fk_start_add FOREIGN KEY (start_station_add) REFERENCES MARKET(maddress)
+	  	ON DELETE CASCADE
+	  	ON UPDATE CASCADE,
+	 CHECK (dmethod IN ('Standard-Shipping', 'Express-Shipping')),
+	 CHECK (state IN ('Shipping', 'Complete', 'Request-Return', 'Returned')),
+	 CHECK (end_date >= start_date)
+);
+
+CREATE Table buyer_behavior (
+	userid		varchar(10)	NOT NULL,
+	productid	varchar(10)	NOT NULL,
+	behavior	varchar(20)	NOT NULL,
+	time		timestamp	NOT NULL,
+	PRIMARY KEY (userid, productid),
+	CONSTRAINT fk_behavior_user FOREIGN KEY (userid) REFERENCES users(userid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CONSTRAINT fk_behavior_product FOREIGN KEY (productid) REFERENCES product(productid)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CHECK (behavior IN ('Favorite', 'Not-Interested', 'Browsed', 'Report'))
+);
+   ```
+   如須測試，請使用連結的程式碼插入資料：[資料雲端](https://drive.google.com/drive/folders/1mN0sNwxAxP-5f2TIeePWi7wxW3nCJfKj?usp=sharing)
+
+4. **設定資料庫密碼**  
+   將資料庫密碼儲存在 `db_password.txt` 文件中，讓後端程式可以自動讀取。例如：
+   ```plaintext
+   password
+   ```
+
+5. **測試資料庫連線**  
+   使用本地的 PostgreSQL 客戶端工具（如 pgAdmin 或 TablePlus）進行連線測試，確認資料庫可以正常使用。
+
 
 ## 系統設計與功能
 
