@@ -8,8 +8,7 @@ import string
 
 import threading
 
-product_lock = threading.Lock()
-coupon_lock = threading.Lock()
+global_lock = threading.Lock()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
@@ -546,48 +545,7 @@ def userbehavior():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# 更新庫存的函數
-def update_product_storage(product_id, quantity):
-    with product_lock:  # 使用鎖來保證庫存更新的互斥性
-        query_check_storage = "SELECT storage FROM product WHERE productid = %s"
-        storage_result = execute_query(query_check_storage, (product_id,))
-
-        if storage_result["status"] == "error" or not storage_result["data"]:
-            return {"status": "error", "message": "商品不存在或查詢失敗"}
-        
-        available_storage = storage_result["data"][0]["storage"]
-        if available_storage < quantity:
-            return {"status": "error", "message": "庫存不足"}
-
-        # 更新庫存
-        query_update_product = """
-            UPDATE product SET storage = storage - %s WHERE productid = %s
-        """
-        execute_query(query_update_product, (quantity, product_id), fetch=False)
-        return {"status": "success", "message": "庫存已更新"}
-
-# 更新優惠券數量的函數
-def update_coupon_quantity(user_id, couponid):
-    with coupon_lock:  # 使用鎖來保證優惠券更新的互斥性
-        query_check_coupon = """
-            SELECT quantity FROM market_coupon 
-            WHERE userid = %s AND couponid = %s
-        """
-        coupon_result = execute_query(query_check_coupon, (user_id, couponid))
-
-        if coupon_result["status"] == "error" or not coupon_result["data"]:
-            return {"status": "error", "message": "優惠券不存在或查詢失敗"}
-
-        available_coupon = coupon_result["data"][0]["quantity"]
-        if available_coupon <= 0:
-            return {"status": "error", "message": "優惠券數量不足"}
-
-        # 更新優惠券數量
-        query_coupon = "UPDATE market_coupon SET quantity = quantity - 1 WHERE userid = %s AND couponid = %s"
-        execute_query(query_coupon, (user_id, couponid), fetch=False)
-        return {"status": "success", "message": "優惠券數量已更新"}
-
-# 新增訂單
+# 新增訂單函數
 @app.route('/add_order', methods=['POST'])
 def add_order():
     user_id = request.json.get('userId')
@@ -603,75 +561,104 @@ def add_order():
     if not start_station_add or not address:
         return jsonify({"status": "error", "message": "缺少必要的配送信息"}), 400
 
-    # 遍歷每個賣家的商品
-    for seller in cart_data:
-        seller_id = seller.get('sellerId')
-        amount = seller.get('amount')
-        if not seller_id or not seller.get('products'):
-            return jsonify({"status": "error", "message": "無效的賣家或商品數據"}), 400
+    with global_lock:  # 全局上鎖，確保整個操作的原子性
+        # 驗證商品庫存與優惠券數量
+        for seller in cart_data:
+            for product in seller.get('products', []):
+                product_id = product.get('productId')
+                quantity = product.get('quantity')
 
-        order_id = generate_id()  # 生成唯一訂單ID
-        print(order_id, user_id, seller_id, amount, method, couponid)
+                if not product_id or quantity <= 0:
+                    return jsonify({"status": "error", "message": "商品數據無效"}), 400
 
-        # 插入到 `orders` 表
+                query_check_storage = "SELECT storage FROM product WHERE productid = %s"
+                storage_result = execute_query(query_check_storage, (product_id,))
+                if storage_result["status"] == "error" or not storage_result["data"]:
+                    return jsonify({"status": "error", "message": f"商品 {product_id} 不存在或查詢失敗"}), 400
+
+                available_storage = storage_result["data"][0]["storage"]
+                if available_storage < quantity:
+                    return jsonify({"status": "error", "message": f"商品 {product_id} 庫存不足"}), 400
+
         if couponid:
-            coupon_result = update_coupon_quantity(user_id, couponid)
-            if coupon_result["status"] == "error":
-                return jsonify(coupon_result), 400
-
-            query_order = """
-                INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state, couponid)
-                VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting', %s)
+            query_check_coupon = """
+                SELECT quantity FROM market_coupon 
+                WHERE userid = %s AND couponid = %s
             """
-            execute_query(query_order, (order_id, user_id, seller_id, amount, method, couponid), fetch=False)
-        else:
-            query_order = """
-                INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
-                VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting')
+            coupon_result = execute_query(query_check_coupon, (user_id, couponid))
+            if coupon_result["status"] == "error" or not coupon_result["data"]:
+                return jsonify({"status": "error", "message": "優惠券不存在或查詢失敗"}), 400
+
+            available_coupon = coupon_result["data"][0]["quantity"]
+            if available_coupon <= 0:
+                return jsonify({"status": "error", "message": "優惠券數量不足"}), 400
+
+        # 開始處理訂單
+        for seller in cart_data:
+            seller_id = seller.get('sellerId')
+            amount = seller.get('amount')
+            if not seller_id or not seller.get('products'):
+                return jsonify({"status": "error", "message": "無效的賣家或商品數據"}), 400
+
+            order_id = generate_id()  # 生成唯一訂單ID
+            print(order_id, user_id, seller_id, amount, method, couponid)
+
+            # 插入到 `orders` 表
+            if couponid:
+                query_order = """
+                    INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state, couponid)
+                    VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting', %s)
+                """
+                execute_query(query_order, (order_id, user_id, seller_id, amount, method, couponid), fetch=False)
+            else:
+                query_order = """
+                    INSERT INTO orders (orderid, otime, buyerid, sellerid, amount, method, state)
+                    VALUES (%s, NOW(), %s, %s, %s, %s, 'Waiting')
+                """
+                execute_query(query_order, (order_id, user_id, seller_id, amount, method), fetch=False)
+
+            # 處理每個商品
+            for product in seller.get('products', []):
+                product_id = product.get('productId')
+                quantity = product.get('quantity')
+
+                # 更新庫存
+                query_update_product = """
+                    UPDATE product SET storage = storage - %s WHERE productid = %s
+                """
+                execute_query(query_update_product, (quantity, product_id), fetch=False)
+
+                # 插入到 `order_product` 表
+                query_order_product = """
+                    INSERT INTO order_product (orderid, productid, quantity)
+                    VALUES (%s, %s, %s)
+                """
+                execute_query(query_order_product, (order_id, product_id, quantity), fetch=False)
+
+                # 清空購物車
+                query_clear_cart = "DELETE FROM cart WHERE userid = %s and productid = %s"
+                execute_query(query_clear_cart, (user_id, product_id), fetch=False)
+
+            # 插入到 `delivery` 表
+            delivery_fee = calculate_delivery_fee(delivery_method)
+            delivery_start_date = time.strftime('%Y-%m-%d')
+            delivery_end_date = time.strftime('%Y-%m-%d')  # 根據實際邏輯設計交貨日期
+
+            query_delivery = """
+                INSERT INTO delivery (orderid, dmethod, fee, start_date, end_date, start_station_add, end_station_add, state)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'Shipping')
             """
-            execute_query(query_order, (order_id, user_id, seller_id, amount, method), fetch=False)
+            execute_query(query_delivery, (
+                order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, start_station_add, address
+            ), fetch=False)
 
-        # 處理每個商品
-        for product in seller.get('products', []):
-            product_id = product.get('productId')
-            quantity = product.get('quantity')
-            price = product.get('price')
-
-            if not product_id or quantity <= 0 or price < 0:
-                return jsonify({"status": "error", "message": "商品數據無效"}), 400
-
-            # 檢查庫存並更新
-            storage_result = update_product_storage(product_id, quantity)
-            if storage_result["status"] == "error":
-                return jsonify(storage_result), 400
-
-            # 插入到 `order_product` 表
-            query_order_product = """
-                INSERT INTO order_product (orderid, productid, quantity)
-                VALUES (%s, %s, %s)
-            """
-            execute_query(query_order_product, (order_id, product_id, quantity), fetch=False)
-
-            # 清空購物車
-            query_clear_cart = "DELETE FROM cart WHERE userid = %s and productid = %s"
-            execute_query(query_clear_cart, (user_id, product_id), fetch=False)
-
-        # 插入到 `delivery` 表
-        delivery_fee = calculate_delivery_fee(delivery_method)  # 計算配送費用
-        delivery_start_date = time.strftime('%Y-%m-%d')
-        delivery_end_date = time.strftime('%Y-%m-%d')  # 根據實際邏輯設計交貨日期
-
-        query_delivery = """
-            INSERT INTO delivery (orderid, dmethod, fee, start_date, end_date, start_station_add, end_station_add, state)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'Shipping')
-        """
-        execute_query(query_delivery, (
-            order_id, delivery_method, delivery_fee, delivery_start_date, delivery_end_date, start_station_add, address
-        ), fetch=False)
+        # 更新優惠券數量
+        if couponid:
+            query_coupon = "UPDATE market_coupon SET quantity = quantity - 1 WHERE userid = %s AND couponid = %s"
+            execute_query(query_coupon, (user_id, couponid), fetch=False)
 
     # 返回成功響應
     return jsonify({"status": "success", "message": "訂單成功添加"}), 200
-
 
 def generate_id():
     id = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
