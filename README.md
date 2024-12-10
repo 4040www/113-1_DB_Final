@@ -95,6 +95,21 @@
 │   ├── package-lock.json
 │   ├── package.json
 │
+├── backup and sql/
+│   ├── db_final.backup
+│   ├── create_table.sql
+│   ├── insert_buyer_behavior.sql
+│   ├── insert_cart.sql
+│   ├── insert_coupon.sql
+│   ├── insert_delivery.sql
+│   ├── insert_market.sql
+│   ├── insert_market_coupon.sql
+│   ├── insert_order_product.sql
+│   ├── insert_orders.sql
+│   ├── insert_product.sql
+│   ├── insert_users.sql
+│   ├── README.md
+│
 ├── README.md
 
 ```
