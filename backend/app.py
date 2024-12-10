@@ -347,6 +347,26 @@ def get_order_seller():
 
     return jsonify({"status": "success", "data": orders})
 
+# 搜尋訂單資料
+@app.route('/get_order_info', methods=['GET'])
+def get_order_info():
+    status = request.args.get('status')  # 取得欄位名稱
+    search_value = request.args.get('value')  # 取得搜尋值
+
+    # 構建安全的 SQL 查詢
+    query = f"""
+        SELECT *
+        FROM orders
+        WHERE {search_value} = %s
+    """
+    
+    # 執行查詢
+    result = execute_query(query, (status,))
+    
+    # 回傳結果
+    return jsonify(result)
+
+
 # 賣場資料
 @app.route('/get_market', methods=['GET'])
 def get_market():
