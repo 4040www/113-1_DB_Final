@@ -231,7 +231,7 @@ export default function Cart() {
                 body: JSON.stringify({
                     userId,
                     orderData,
-                    startstationadd: '台灣大學',
+                    startstationadd: sellerData.seller_address,
                     endstationadd: addresses,
                     method: payMethod,
                     couponid: couponId,
