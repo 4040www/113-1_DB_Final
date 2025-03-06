@@ -110,9 +110,5 @@
 
 ## 影片與文件
 
-- **GitHub 專案連結**：[GitHub Repository](https://github.com/yourusername/timmy-market)
 - **展示影片連結**：[影片展示](https://youtu.be/zcsuNxNN8Mw?si=KR4fy5xa4pepJRx2)
-
-這些資源展示了專案的完整功能與操作流程，您可以進一步了解系統如何運作，並查看實際的操作界面與功能演示。
-
----
+- **書面報告**：[報告連結](https://drive.google.com/file/d/1D0jjMeWBBkmb9ZFhpiRPa2Pltwp4hhE5/view?usp=sharing)
